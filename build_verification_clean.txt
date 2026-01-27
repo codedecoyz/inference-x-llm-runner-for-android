@@ -1,0 +1,55 @@
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:generateDebugBuildConfig
+> Task :app:generateDebugResValues
+> Task :app:mapDebugSourceSetPaths
+> Task :app:generateDebugResources
+> Task :app:checkDebugAarMetadata
+> Task :app:packageDebugResources
+> Task :app:createDebugCompatibleScreenManifests
+> Task :app:extractDeepLinksDebug
+> Task :app:parseDebugLocalResources
+> Task :app:mergeDebugResources
+> Task :app:processDebugMainManifest
+> Task :app:processDebugManifest
+> Task :app:mergeDebugShaders
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:mergeDebugAssets
+> Task :app:compressDebugAssets
+> Task :app:desugarDebugFileDependencies
+> Task :app:javaPreCompileDebug
+> Task :app:mergeDebugStartupProfile UP-TO-DATE
+> Task :app:configureCMakeDebug[arm64-v8a]
+
+> Task :app:buildCMakeDebug[arm64-v8a] FAILED
+C/C++: ninja: error: 'C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/jniLibs/arm64-v8a/libllama.so', needed by 'C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/build/intermediates/cxx/Debug/314g5z2v/obj/arm64-v8a/libllama_jni.so', missing and no known rule to make it
+
+> Task :app:processDebugManifestForPackage
+> Task :app:checkDebugDuplicateClasses
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:buildCMakeDebug[arm64-v8a]'.
+> com.android.ide.common.process.ProcessException: ninja: Entering directory `C:\Users\Asus\Desktop\bored\mobile-llama-compyle-offline-ai-android-app\app\.cxx\Debug\314g5z2v\arm64-v8a'
+  
+  C++ build system [build] failed while executing:
+      @echo off
+      "C:\\Users\\Asus\\AppData\\Local\\Android\\Sdk\\cmake\\3.22.1\\bin\\ninja.exe" ^
+        -C ^
+        "C:\\Users\\Asus\\Desktop\\bored\\mobile-llama-compyle-offline-ai-android-app\\app\\.cxx\\Debug\\314g5z2v\\arm64-v8a" ^
+        llama_jni
+    from C:\Users\Asus\Desktop\bored\mobile-llama-compyle-offline-ai-android-app\app
+  ninja: error: 'C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/jniLibs/arm64-v8a/libllama.so', needed by 'C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/build/intermediates/cxx/Debug/314g5z2v/obj/arm64-v8a/libllama_jni.so', missing and no known rule to make it
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 6s
+22 actionable tasks: 21 executed, 1 up-to-date

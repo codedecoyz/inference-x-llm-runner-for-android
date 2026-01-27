@@ -7,31 +7,28 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-private val LightColorScheme = lightColorScheme(
-    primary = Color(0xFF1976D2),
-    secondary = Color(0xFF03DAC5),
-    tertiary = Color(0xFF3700B3),
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    error = Color(0xFFB00020),
-    onPrimary = Color.White,
-    onSecondary = Color.Black,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
+// Dark-First Design
+// We use the same deep palette for both light/dark system settings to enforce branding
+private val DarkColorScheme = darkColorScheme(
+    primary = PrimaryColor,
+    onPrimary = OnPrimaryColor,
+    primaryContainer = InfTealDark,
+    onPrimaryContainer = Color.White,
+    secondary = SecondaryColor,
+    onSecondary = Color.White,
+    tertiary = TertiaryColor,
+    onTertiary = Color.White,
+    background = BackgroundDark,
+    onBackground = OnBackgroundDark,
+    surface = SurfaceDark,
+    onSurface = OnSurfaceDark,
+    surfaceVariant = SurfaceVariantDark,
+    onSurfaceVariant = OnSurfaceDark,
+    error = Color(0xFFCF6679),
+    onError = Color.Black
 )
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Color(0xFF90CAF9),
-    secondary = Color(0xFF03DAC5),
-    tertiary = Color(0xFF3700B3),
-    background = Color(0xFF1C1B1F),
-    surface = Color(0xFF1C1B1F),
-    error = Color(0xFFCF6679),
-    onPrimary = Color.Black,
-    onSecondary = Color.Black,
-    onBackground = Color(0xFFE6E1E5),
-    onSurface = Color(0xFFE6E1E5),
-)
+private val LightColorScheme = DarkColorScheme // Enforce dark theme branding
 
 @Composable
 fun MobileLlamaTheme(
