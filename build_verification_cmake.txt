@@ -1,0 +1,295 @@
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:generateDebugBuildConfig
+> Task :app:generateDebugResValues
+> Task :app:checkDebugAarMetadata
+> Task :app:mapDebugSourceSetPaths
+> Task :app:generateDebugResources
+> Task :app:packageDebugResources
+> Task :app:createDebugCompatibleScreenManifests
+> Task :app:parseDebugLocalResources
+> Task :app:extractDeepLinksDebug
+> Task :app:mergeDebugResources
+> Task :app:processDebugMainManifest
+> Task :app:processDebugManifest
+> Task :app:mergeDebugShaders
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:javaPreCompileDebug
+> Task :app:mergeDebugAssets
+> Task :app:compressDebugAssets
+> Task :app:desugarDebugFileDependencies
+> Task :app:mergeDebugStartupProfile UP-TO-DATE
+> Task :app:checkDebugDuplicateClasses
+> Task :app:configureCMakeDebug[arm64-v8a]
+> Task :app:processDebugManifestForPackage
+> Task :app:mergeLibDexDebug
+> Task :app:processDebugResources
+> Task :app:mergeExtDexDebug
+
+> Task :app:buildCMakeDebug[arm64-v8a] FAILED
+C/C++: ninja: Entering directory `C:\Users\Asus\Desktop\bored\mobile-llama-compyle-offline-ai-android-app\app\.cxx\Debug\314g5z2v\arm64-v8a'
+C/C++: C:\Users\Asus\AppData\Local\Android\Sdk\ndk\26.1.10909125\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=C:/Users/Asus/AppData/Local/Android/Sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/windows-x86_64/sysroot -Dllama_jni_EXPORTS -IC:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/../jniLibs/include -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info  -fPIC -MD -MT CMakeFiles/llama_jni.dir/llama_jni.cpp.o -MF CMakeFiles\llama_jni.dir\llama_jni.cpp.o.d -o CMakeFiles/llama_jni.dir/llama_jni.cpp.o -c C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/llama_jni.cpp
+C/C++: C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/llama_jni.cpp:34:5: error: no matching function for call to 'llama_backend_init'
+C/C++:     llama_backend_init(false);
+C/C++:     ^~~~~~~~~~~~~~~~~~
+C/C++: C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/../jniLibs/include/llama.h:426:20: note: candidate function not viable: requires 0 arguments, but 1 was provided
+C/C++:     LLAMA_API void llama_backend_init(void);
+C/C++:                    ^
+C/C++: C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/llama_jni.cpp:38:26: warning: 'llama_load_model_from_file' is deprecated: use llama_model_load_from_file instead [-Wdeprecated-declarations]
+C/C++:     llama_model* model = llama_load_model_from_file(path, model_params);
+C/C++:                          ^
+C/C++: C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/../jniLibs/include/llama.h:442:5: note: 'llama_load_model_from_file' has been explicitly marked deprecated here
+C/C++:     DEPRECATED(LLAMA_API struct llama_model * llama_load_model_from_file(
+C/C++:     ^
+C/C++: C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/../jniLibs/include/llama.h:29:56: note: expanded from macro 'DEPRECATED'
+C/C++: #    define DEPRECATED(func, hint) func __attribute__((deprecated(hint)))
+C/C++:                                                        ^
+C/C++: C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/llama_jni.cpp:55:30: warning: 'llama_new_context_with_model' is deprecated: use llama_init_from_model instead [-Wdeprecated-declarations]
+C/C++:     llama_context* context = llama_new_context_with_model(model, ctx_params);
+C/C++:                              ^
+C/C++: C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/../jniLibs/include/llama.h:474:5: note: 'llama_new_context_with_model' has been explicitly marked deprecated here
+C/C++:     DEPRECATED(LLAMA_API struct llama_context * llama_new_context_with_model(
+C/C++:     ^
+C/C++: C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/../jniLibs/include/llama.h:29:56: note: expanded from macro 'DEPRECATED'
+C/C++: #    define DEPRECATED(func, hint) func __attribute__((deprecated(hint)))
+C/C++:                                                        ^
+C/C++: C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/llama_jni.cpp:58:9: warning: 'llama_free_model' is deprecated: use llama_model_free instead [-Wdeprecated-declarations]
+C/C++:         llama_free_model(model);
+C/C++:         ^
+C/C++: C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/../jniLibs/include/llama.h:465:5: note: 'llama_free_model' has been explicitly marked deprecated here
+C/C++:     DEPRECATED(LLAMA_API void llama_free_model(struct llama_model * model),
+C/C++:     ^
+C/C++: C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/../jniLibs/include/llama.h:29:56: note: expanded from macro 'DEPRECATED'
+C/C++: #    define DEPRECATED(func, hint) func __attribute__((deprecated(hint)))
+C/C++:                                                        ^
+C/C++: C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/llama_jni.cpp:92:28: error: no matching function for call to 'llama_tokenize'
+C/C++:     int n_prompt_tokens = -llama_tokenize(instance->context, prompt_text, 0, nullptr, 0, true, true);
+C/C++:                            ^~~~~~~~~~~~~~
+C/C++: C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/../jniLibs/include/llama.h:1110:23: note: candidate function not viable: cannot convert argument of incomplete type 'llama_context *' to 'const struct llama_vocab *' for 1st argument
+C/C++:     LLAMA_API int32_t llama_tokenize(
+C/C++:                       ^
+C/C++: C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/llama_jni.cpp:94:5: error: no matching function for call to 'llama_tokenize'
+C/C++:     llama_tokenize(instance->context, prompt_text, n_prompt_tokens, tokens_prompt.data(), tokens_prompt.size(), true, true);
+C/C++:     ^~~~~~~~~~~~~~
+C/C++: C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/../jniLibs/include/llama.h:1110:23: note: candidate function not viable: cannot convert argument of incomplete type 'llama_context *' to 'const struct llama_vocab *' for 1st argument
+C/C++:     LLAMA_API int32_t llama_tokenize(
+C/C++:                       ^
+C/C++: C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/llama_jni.cpp:107:9: error: use of undeclared identifier 'llama_batch_clear'; did you mean 'llama_batch_free'?
+C/C++:         llama_batch_clear(batch);
+C/C++:         ^~~~~~~~~~~~~~~~~
+C/C++:         llama_batch_free
+C/C++: C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/../jniLibs/include/llama.h:914:20: note: 'llama_batch_free' declared here
+C/C++:     LLAMA_API void llama_batch_free(struct llama_batch batch);
+C/C++:                    ^
+C/C++: C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/llama_jni.cpp:111:13: error: use of undeclared identifier 'llama_batch_add'
+C/C++:             llama_batch_add(batch, tokens_prompt[i + j], i + j, {0}, false);
+C/C++:             ^
+C/C++: C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/llama_jni.cpp:149:23: error: no matching function for call to 'llama_n_vocab'
+C/C++:         int n_vocab = llama_n_vocab(llama_get_model(instance->context));
+C/C++:                       ^~~~~~~~~~~~~
+C/C++: C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/../jniLibs/include/llama.h:527:34: note: candidate function not viable: cannot convert argument of incomplete type 'const struct llama_model *' to 'const struct llama_vocab *' for 1st argument
+C/C++:     DEPRECATED(LLAMA_API int32_t llama_n_vocab    (const struct llama_vocab * vocab), "use llama_vocab_n_tokens instead");
+C/C++:                                  ^
+C/C++: C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/../jniLibs/include/llama.h:29:36: note: expanded from macro 'DEPRECATED'
+C/C++: #    define DEPRECATED(func, hint) func __attribute__((deprecated(hint)))
+C/C++:                                    ^
+C/C++: C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/llama_jni.cpp:160:9: error: use of undeclared identifier 'llama_sample_top_k'; did you mean 'llama_sampler_i'?
+C/C++:         llama_sample_top_k(instance->context, &candidates_p, 40, 1);
+C/C++:         ^
+C/C++: C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/../jniLibs/include/llama.h:1217:12: note: 'llama_sampler_i' declared here
+C/C++:     struct llama_sampler_i {
+C/C++:            ^
+C/C++: C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/llama_jni.cpp:161:9: error: use of undeclared identifier 'llama_sample_top_p'; did you mean 'llama_sampler_i'?
+C/C++:         llama_sample_top_p(instance->context, &candidates_p, 0.9f, 1);
+C/C++:         ^
+C/C++: C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/../jniLibs/include/llama.h:1217:12: note: 'llama_sampler_i' declared here
+C/C++:     struct llama_sampler_i {
+C/C++:            ^
+C/C++: C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/llama_jni.cpp:162:9: error: use of undeclared identifier 'llama_sample_temp'
+C/C++:         llama_sample_temp(instance->context, &candidates_p, 0.7f);
+C/C++:         ^
+C/C++: C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/llama_jni.cpp:163:36: error: use of undeclared identifier 'llama_sample_token'
+C/C++:         llama_token new_token_id = llama_sample_token(instance->context, &candidates_p);
+C/C++:                                    ^
+C/C++: C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/llama_jni.cpp:166:29: error: no matching function for call to 'llama_token_eos'
+C/C++:         if (new_token_id == llama_token_eos(llama_get_model(instance->context))) {
+C/C++:                             ^~~~~~~~~~~~~~~
+C/C++: C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/../jniLibs/include/llama.h:1077:38: note: candidate function not viable: cannot convert argument of incomplete type 'const struct llama_model *' to 'const struct llama_vocab *' for 1st argument
+C/C++:     DEPRECATED(LLAMA_API llama_token llama_token_eos(const struct llama_vocab * vocab), "use llama_vocab_eos instead");
+C/C++:                                      ^
+C/C++: C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/../jniLibs/include/llama.h:29:36: note: expanded from macro 'DEPRECATED'
+C/C++: #    define DEPRECATED(func, hint) func __attribute__((deprecated(hint)))
+C/C++:                                    ^
+C/C++: C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/llama_jni.cpp:173:27: error: no matching function for call to 'llama_token_to_piece'
+C/C++:         int n_token_str = llama_token_to_piece(llama_get_model(instance->context), new_token_id,
+C/C++:                           ^~~~~~~~~~~~~~~~~~~~
+C/C++: C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/../jniLibs/include/llama.h:1124:23: note: candidate function not viable: requires 6 arguments, but 5 were provided
+C/C++:     LLAMA_API int32_t llama_token_to_piece(
+C/C++:                       ^
+C/C++: C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/llama_jni.cpp:194:9: error: use of undeclared identifier 'llama_batch_clear'; did you mean 'llama_batch_free'?
+C/C++:         llama_batch_clear(batch);
+C/C++:         ^~~~~~~~~~~~~~~~~
+C/C++:         llama_batch_free
+C/C++: C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/../jniLibs/include/llama.h:914:20: note: 'llama_batch_free' declared here
+C/C++:     LLAMA_API void llama_batch_free(struct llama_batch batch);
+C/C++:                    ^
+C/C++: C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/llama_jni.cpp:195:9: error: use of undeclared identifier 'llama_batch_add'
+C/C++:         llama_batch_add(batch, new_token_id, n_cur, {0}, true);
+C/C++:         ^
+C/C++: C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/llama_jni.cpp:234:13: warning: 'llama_free_model' is deprecated: use llama_model_free instead [-Wdeprecated-declarations]
+C/C++:             llama_free_model(instance->model);
+C/C++:             ^
+C/C++: C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/../jniLibs/include/llama.h:465:5: note: 'llama_free_model' has been explicitly marked deprecated here
+C/C++:     DEPRECATED(LLAMA_API void llama_free_model(struct llama_model * model),
+C/C++:     ^
+C/C++: C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/../jniLibs/include/llama.h:29:56: note: expanded from macro 'DEPRECATED'
+C/C++: #    define DEPRECATED(func, hint) func __attribute__((deprecated(hint)))
+C/C++:                                                        ^
+C/C++: 4 warnings and 14 errors generated.
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:buildCMakeDebug[arm64-v8a]'.
+> com.android.ide.common.process.ProcessException: ninja: Entering directory `C:\Users\Asus\Desktop\bored\mobile-llama-compyle-offline-ai-android-app\app\.cxx\Debug\314g5z2v\arm64-v8a'
+  [1/2] Building CXX object CMakeFiles/llama_jni.dir/llama_jni.cpp.o
+  FAILED: CMakeFiles/llama_jni.dir/llama_jni.cpp.o 
+  C:\Users\Asus\AppData\Local\Android\Sdk\ndk\26.1.10909125\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=C:/Users/Asus/AppData/Local/Android/Sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/windows-x86_64/sysroot -Dllama_jni_EXPORTS -IC:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/../jniLibs/include -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info  -fPIC -MD -MT CMakeFiles/llama_jni.dir/llama_jni.cpp.o -MF CMakeFiles\llama_jni.dir\llama_jni.cpp.o.d -o CMakeFiles/llama_jni.dir/llama_jni.cpp.o -c C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/llama_jni.cpp
+  C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/llama_jni.cpp:34:5: error: no matching function for call to 'llama_backend_init'
+      llama_backend_init(false);
+      ^~~~~~~~~~~~~~~~~~
+  C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/../jniLibs/include/llama.h:426:20: note: candidate function not viable: requires 0 arguments, but 1 was provided
+      LLAMA_API void llama_backend_init(void);
+                     ^
+  C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/llama_jni.cpp:38:26: warning: 'llama_load_model_from_file' is deprecated: use llama_model_load_from_file instead [-Wdeprecated-declarations]
+      llama_model* model = llama_load_model_from_file(path, model_params);
+                           ^
+  C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/../jniLibs/include/llama.h:442:5: note: 'llama_load_model_from_file' has been explicitly marked deprecated here
+      DEPRECATED(LLAMA_API struct llama_model * llama_load_model_from_file(
+      ^
+  C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/../jniLibs/include/llama.h:29:56: note: expanded from macro 'DEPRECATED'
+  #    define DEPRECATED(func, hint) func __attribute__((deprecated(hint)))
+                                                         ^
+  C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/llama_jni.cpp:55:30: warning: 'llama_new_context_with_model' is deprecated: use llama_init_from_model instead [-Wdeprecated-declarations]
+      llama_context* context = llama_new_context_with_model(model, ctx_params);
+                               ^
+  C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/../jniLibs/include/llama.h:474:5: note: 'llama_new_context_with_model' has been explicitly marked deprecated here
+      DEPRECATED(LLAMA_API struct llama_context * llama_new_context_with_model(
+      ^
+  C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/../jniLibs/include/llama.h:29:56: note: expanded from macro 'DEPRECATED'
+  #    define DEPRECATED(func, hint) func __attribute__((deprecated(hint)))
+                                                         ^
+  C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/llama_jni.cpp:58:9: warning: 'llama_free_model' is deprecated: use llama_model_free instead [-Wdeprecated-declarations]
+          llama_free_model(model);
+          ^
+  C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/../jniLibs/include/llama.h:465:5: note: 'llama_free_model' has been explicitly marked deprecated here
+      DEPRECATED(LLAMA_API void llama_free_model(struct llama_model * model),
+      ^
+  C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/../jniLibs/include/llama.h:29:56: note: expanded from macro 'DEPRECATED'
+  #    define DEPRECATED(func, hint) func __attribute__((deprecated(hint)))
+                                                         ^
+  C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/llama_jni.cpp:92:28: error: no matching function for call to 'llama_tokenize'
+      int n_prompt_tokens = -llama_tokenize(instance->context, prompt_text, 0, nullptr, 0, true, true);
+                             ^~~~~~~~~~~~~~
+  C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/../jniLibs/include/llama.h:1110:23: note: candidate function not viable: cannot convert argument of incomplete type 'llama_context *' to 'const struct llama_vocab *' for 1st argument
+      LLAMA_API int32_t llama_tokenize(
+                        ^
+  C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/llama_jni.cpp:94:5: error: no matching function for call to 'llama_tokenize'
+      llama_tokenize(instance->context, prompt_text, n_prompt_tokens, tokens_prompt.data(), tokens_prompt.size(), true, true);
+      ^~~~~~~~~~~~~~
+  C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/../jniLibs/include/llama.h:1110:23: note: candidate function not viable: cannot convert argument of incomplete type 'llama_context *' to 'const struct llama_vocab *' for 1st argument
+      LLAMA_API int32_t llama_tokenize(
+                        ^
+  C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/llama_jni.cpp:107:9: error: use of undeclared identifier 'llama_batch_clear'; did you mean 'llama_batch_free'?
+          llama_batch_clear(batch);
+          ^~~~~~~~~~~~~~~~~
+          llama_batch_free
+  C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/../jniLibs/include/llama.h:914:20: note: 'llama_batch_free' declared here
+      LLAMA_API void llama_batch_free(struct llama_batch batch);
+                     ^
+  C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/llama_jni.cpp:111:13: error: use of undeclared identifier 'llama_batch_add'
+              llama_batch_add(batch, tokens_prompt[i + j], i + j, {0}, false);
+              ^
+  C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/llama_jni.cpp:149:23: error: no matching function for call to 'llama_n_vocab'
+          int n_vocab = llama_n_vocab(llama_get_model(instance->context));
+                        ^~~~~~~~~~~~~
+  C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/../jniLibs/include/llama.h:527:34: note: candidate function not viable: cannot convert argument of incomplete type 'const struct llama_model *' to 'const struct llama_vocab *' for 1st argument
+      DEPRECATED(LLAMA_API int32_t llama_n_vocab    (const struct llama_vocab * vocab), "use llama_vocab_n_tokens instead");
+                                   ^
+  C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/../jniLibs/include/llama.h:29:36: note: expanded from macro 'DEPRECATED'
+  #    define DEPRECATED(func, hint) func __attribute__((deprecated(hint)))
+                                     ^
+  C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/llama_jni.cpp:160:9: error: use of undeclared identifier 'llama_sample_top_k'; did you mean 'llama_sampler_i'?
+          llama_sample_top_k(instance->context, &candidates_p, 40, 1);
+          ^
+  C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/../jniLibs/include/llama.h:1217:12: note: 'llama_sampler_i' declared here
+      struct llama_sampler_i {
+             ^
+  C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/llama_jni.cpp:161:9: error: use of undeclared identifier 'llama_sample_top_p'; did you mean 'llama_sampler_i'?
+          llama_sample_top_p(instance->context, &candidates_p, 0.9f, 1);
+          ^
+  C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/../jniLibs/include/llama.h:1217:12: note: 'llama_sampler_i' declared here
+      struct llama_sampler_i {
+             ^
+  C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/llama_jni.cpp:162:9: error: use of undeclared identifier 'llama_sample_temp'
+          llama_sample_temp(instance->context, &candidates_p, 0.7f);
+          ^
+  C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/llama_jni.cpp:163:36: error: use of undeclared identifier 'llama_sample_token'
+          llama_token new_token_id = llama_sample_token(instance->context, &candidates_p);
+                                     ^
+  C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/llama_jni.cpp:166:29: error: no matching function for call to 'llama_token_eos'
+          if (new_token_id == llama_token_eos(llama_get_model(instance->context))) {
+                              ^~~~~~~~~~~~~~~
+  C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/../jniLibs/include/llama.h:1077:38: note: candidate function not viable: cannot convert argument of incomplete type 'const struct llama_model *' to 'const struct llama_vocab *' for 1st argument
+      DEPRECATED(LLAMA_API llama_token llama_token_eos(const struct llama_vocab * vocab), "use llama_vocab_eos instead");
+                                       ^
+  C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/../jniLibs/include/llama.h:29:36: note: expanded from macro 'DEPRECATED'
+  #    define DEPRECATED(func, hint) func __attribute__((deprecated(hint)))
+                                     ^
+  C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/llama_jni.cpp:173:27: error: no matching function for call to 'llama_token_to_piece'
+          int n_token_str = llama_token_to_piece(llama_get_model(instance->context), new_token_id,
+                            ^~~~~~~~~~~~~~~~~~~~
+  C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/../jniLibs/include/llama.h:1124:23: note: candidate function not viable: requires 6 arguments, but 5 were provided
+      LLAMA_API int32_t llama_token_to_piece(
+                        ^
+  C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/llama_jni.cpp:194:9: error: use of undeclared identifier 'llama_batch_clear'; did you mean 'llama_batch_free'?
+          llama_batch_clear(batch);
+          ^~~~~~~~~~~~~~~~~
+          llama_batch_free
+  C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/../jniLibs/include/llama.h:914:20: note: 'llama_batch_free' declared here
+      LLAMA_API void llama_batch_free(struct llama_batch batch);
+                     ^
+  C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/llama_jni.cpp:195:9: error: use of undeclared identifier 'llama_batch_add'
+          llama_batch_add(batch, new_token_id, n_cur, {0}, true);
+          ^
+  C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/llama_jni.cpp:234:13: warning: 'llama_free_model' is deprecated: use llama_model_free instead [-Wdeprecated-declarations]
+              llama_free_model(instance->model);
+              ^
+  C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/../jniLibs/include/llama.h:465:5: note: 'llama_free_model' has been explicitly marked deprecated here
+      DEPRECATED(LLAMA_API void llama_free_model(struct llama_model * model),
+      ^
+  C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/../jniLibs/include/llama.h:29:56: note: expanded from macro 'DEPRECATED'
+  #    define DEPRECATED(func, hint) func __attribute__((deprecated(hint)))
+                                                         ^
+  4 warnings and 14 errors generated.
+  ninja: build stopped: subcommand failed.
+  
+  C++ build system [build] failed while executing:
+      @echo off
+      "C:\\Users\\Asus\\AppData\\Local\\Android\\Sdk\\cmake\\3.22.1\\bin\\ninja.exe" ^
+        -C ^
+        "C:\\Users\\Asus\\Desktop\\bored\\mobile-llama-compyle-offline-ai-android-app\\app\\.cxx\\Debug\\314g5z2v\\arm64-v8a" ^
+        llama_jni
+    from C:\Users\Asus\Desktop\bored\mobile-llama-compyle-offline-ai-android-app\app
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 31s
+25 actionable tasks: 24 executed, 1 up-to-date

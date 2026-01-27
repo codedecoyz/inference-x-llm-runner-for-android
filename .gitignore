@@ -86,3 +86,7 @@ app/src/main/jniLibs/include/*.h
 # OS-specific files
 .DS_Store
 Thumbs.db
+
+# Large Models and local libs
+llama.cpp/
+tinyllama-model/

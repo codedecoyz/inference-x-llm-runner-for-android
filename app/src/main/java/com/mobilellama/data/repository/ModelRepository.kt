@@ -4,13 +4,16 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.os.StatFs
 import android.util.Log
-import com.mobilellama.BuildConfig
+import com.mobilellama.data.model.AiModel
 import com.mobilellama.data.model.DownloadState
+import com.mobilellama.data.model.ModelRegistry
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -24,8 +27,28 @@ class ModelRepository @Inject constructor(
     @ApplicationContext private val context: Context,
     private val prefs: SharedPreferences
 ) {
-    private val _downloadState = MutableStateFlow<DownloadState>(DownloadState.Idle)
-    val downloadState: StateFlow<DownloadState> = _downloadState.asStateFlow()
+    // Default to TinyLlama if nothing selected
+    private val _selectedModel = MutableStateFlow(getSelectedModelFromPrefs())
+    val selectedModel: StateFlow<AiModel> = _selectedModel.asStateFlow()
+
+    // Track state for EACH model by filename
+    private val _modelStates = MutableStateFlow<Map<String, DownloadState>>(emptyMap())
+    val modelStates: StateFlow<Map<String, DownloadState>> = _modelStates.asStateFlow()
+
+    // Deprecated single state accessor (returns state of SELECTED model)
+    // We keep this for backward compatibility with ViewModels until they are fully migrated
+    val downloadState: StateFlow<DownloadState> = _modelStates.asStateFlow().mapState { states ->
+        // Default to Idle if not found
+        states[_selectedModel.value.filename] ?: DownloadState.Idle
+    }
+    
+    // Helper to map Flow
+    private fun <T, R> StateFlow<T>.mapState(transform: (T) -> R): StateFlow<R> {
+        val scope = kotlinx.coroutines.CoroutineScope(Dispatchers.Main)
+        val initial = transform(value)
+        val flow = this.map(transform)
+        return flow.stateIn(scope, kotlinx.coroutines.flow.SharingStarted.Eagerly, initial)
+    }
 
     private val client = OkHttpClient.Builder()
         .followRedirects(true)
@@ -34,168 +57,149 @@ class ModelRepository @Inject constructor(
 
     companion object {
         private const val TAG = "ModelRepository"
-        private const val MODEL_FILENAME = "tinyllama-1.1b-chat-q4_k_m.gguf"
-        private const val TEMP_MODEL_FILENAME = "tinyllama.gguf.tmp"
         private const val PREF_MODEL_DOWNLOADED = "model_downloaded"
         private const val PREF_MODEL_PATH = "model_path"
-        private const val MIN_REQUIRED_SPACE_BYTES = 1_000_000_000L // 1 GB
+        private const val PREF_SELECTED_MODEL = "selected_model_name"
+    }
+    
+    fun getModelState(model: AiModel): DownloadState {
+        return _modelStates.value[model.filename] ?: if (isModelDownloaded(model)) DownloadState.Success else DownloadState.Idle
+    }
+    
+    private fun updateModelState(filename: String, state: DownloadState) {
+        val newMap = _modelStates.value.toMutableMap()
+        newMap[filename] = state
+        _modelStates.value = newMap
     }
 
+    fun selectModel(model: AiModel) {
+        _selectedModel.value = model
+        prefs.edit().putString(PREF_SELECTED_MODEL, model.name).apply()
+    }
+
+    private fun getSelectedModelFromPrefs(): AiModel {
+        val name = prefs.getString(PREF_SELECTED_MODEL, ModelRegistry.getDefault().name)
+        return ModelRegistry.availableModels.find { it.name == name } ?: ModelRegistry.getDefault()
+    }
+
+    // Check if the CURRENT selected model is on disk
     fun isModelDownloaded(): Boolean {
-        val downloaded = prefs.getBoolean(PREF_MODEL_DOWNLOADED, false)
-        val modelPath = getModelPath()
-        val modelFile = File(modelPath)
-        return downloaded && modelFile.exists() && modelFile.length() > 0
+        return isModelDownloaded(selectedModel.value)
+    }
+
+    // Check if SPECIFIC model is on disk
+    fun isModelDownloaded(model: AiModel): Boolean {
+        val file = File(context.getExternalFilesDir(null), "models/${model.filename}")
+        return file.exists() && file.length() > 0
     }
 
     fun getModelPath(): String {
-        val savedPath = prefs.getString(PREF_MODEL_PATH, null)
-        return savedPath ?: File(context.filesDir, "models/$MODEL_FILENAME").absolutePath
+        return File(context.getExternalFilesDir(null), "models/${selectedModel.value.filename}").absolutePath
     }
 
-    suspend fun checkModel(): Result<Boolean> = withContext(Dispatchers.IO) {
-        try {
-            _downloadState.value = DownloadState.Checking
-
-            val modelPath = getModelPath()
-            val modelFile = File(modelPath)
-
-            if (!modelFile.exists()) {
-                Log.i(TAG, "Model file does not exist")
-                _downloadState.value = DownloadState.Idle
-                return@withContext Result.success(false)
+    // Initial check for ALL models
+    suspend fun checkAllModels() = withContext(Dispatchers.IO) {
+        val newStates = _modelStates.value.toMutableMap()
+        for (model in ModelRegistry.availableModels) {
+            if (isModelDownloaded(model)) {
+                newStates[model.filename] = DownloadState.Success
+            } else {
+                newStates[model.filename] = DownloadState.Idle
             }
-
-            val expectedSize = BuildConfig.MODEL_SIZE_BYTES
-            val actualSize = modelFile.length()
-
-            if (actualSize != expectedSize) {
-                Log.w(TAG, "Model file size mismatch. Expected: $expectedSize, Actual: $actualSize")
-                // Delete invalid file
-                modelFile.delete()
-                prefs.edit().putBoolean(PREF_MODEL_DOWNLOADED, false).apply()
-                _downloadState.value = DownloadState.Idle
-                return@withContext Result.success(false)
-            }
-
-            Log.i(TAG, "Model file verified successfully")
-            _downloadState.value = DownloadState.Success
-            Result.success(true)
-        } catch (e: Exception) {
-            Log.e(TAG, "Error checking model", e)
-            _downloadState.value = DownloadState.Error(e.message ?: "Unknown error", true)
-            Result.failure(e)
         }
+        _modelStates.value = newStates
     }
 
-    suspend fun downloadModel(): Result<Unit> = withContext(Dispatchers.IO) {
+    // Kept for backward compatibility (downloads SELECTED model)
+    suspend fun downloadModel() {
+        downloadModel(_selectedModel.value)
+    }
+
+    suspend fun downloadModel(targetModel: AiModel) = withContext(Dispatchers.IO) {
         try {
+            updateModelState(targetModel.filename, DownloadState.Checking)
+
             // Check available storage
             val availableBytes = getAvailableStorageBytes()
-            if (availableBytes < MIN_REQUIRED_SPACE_BYTES) {
-                val errorMsg = "Not enough space. Need ~1 GB free. Please free up space and try again."
-                _downloadState.value = DownloadState.Error(errorMsg, false)
-                return@withContext Result.failure(Exception(errorMsg))
+            if (availableBytes < targetModel.expectedSize + 50_000_000) { 
+                val errorMsg = "Storage full. Need ${(targetModel.expectedSize / 1024 / 1024)} MB."
+                updateModelState(targetModel.filename, DownloadState.Error(errorMsg, false))
+                return@withContext
             }
 
-            val modelDir = File(context.filesDir, "models")
-            if (!modelDir.exists()) {
-                modelDir.mkdirs()
+            val modelDir = File(context.getExternalFilesDir(null), "models")
+            if (!modelDir.exists()) modelDir.mkdirs()
+
+            val tempFile = File(context.cacheDir, "${targetModel.filename}.tmp")
+            val finalFile = File(modelDir, targetModel.filename)
+            val downloadUrl = targetModel.url
+            val expectedSize = targetModel.expectedSize
+
+            Log.i(TAG, "Starting download for ${targetModel.name}")
+
+            val existingLength = if (tempFile.exists()) tempFile.length() else 0L
+            val isResume = existingLength > 0 && existingLength < expectedSize
+
+            val requestBuilder = Request.Builder().url(downloadUrl)
+            if (isResume) {
+                requestBuilder.header("Range", "bytes=$existingLength-")
             }
 
-            val tempFile = File(context.cacheDir, TEMP_MODEL_FILENAME)
-            val finalFile = File(modelDir, MODEL_FILENAME)
-
-            val downloadUrl = BuildConfig.MODEL_DOWNLOAD_URL
-            val expectedSize = BuildConfig.MODEL_SIZE_BYTES
-
-            Log.i(TAG, "Starting download from: $downloadUrl")
-
-            val request = Request.Builder()
-                .url(downloadUrl)
-                .build()
-
-            val response = client.newCall(request).execute()
+            val response = client.newCall(requestBuilder.build()).execute()
 
             if (!response.isSuccessful) {
-                val errorMsg = when (response.code) {
-                    403, 429 -> "Download temporarily unavailable. Please try again in a few minutes."
-                    404 -> "Model file not found. Please check configuration."
-                    else -> "Network error. Please check your connection."
-                }
-                _downloadState.value = DownloadState.Error(errorMsg, true)
-                return@withContext Result.failure(Exception(errorMsg))
+                if (response.code == 416) tempFile.delete()
+                val errorMsg = "Network error: ${response.code}"
+                updateModelState(targetModel.filename, DownloadState.Error(errorMsg, true))
+                return@withContext
             }
 
-            val body = response.body ?: throw Exception("Response body is null")
-            val contentLength = body.contentLength()
+            val isResumed = isResume && response.code == 206
+            val contentLength = response.body?.contentLength() ?: 0L
+            val totalExpected = if (isResumed) existingLength + contentLength else contentLength
 
-            Log.i(TAG, "Download started. Content length: $contentLength")
+            Log.i(TAG, "Download started: $contentLength bytes")
 
-            body.byteStream().use { input ->
-                FileOutputStream(tempFile).use { output ->
+            response.body?.byteStream()?.use { input ->
+                FileOutputStream(tempFile, isResumed).use { output ->
                     val buffer = ByteArray(8192)
                     var bytesRead: Int
-                    var totalBytesRead = 0L
-                    var lastProgressUpdate = 0f
+                    var totalBytesRead = if (isResumed) existingLength else 0L
+                    var lastProgress = 0f
 
                     while (input.read(buffer).also { bytesRead = it } != -1) {
                         output.write(buffer, 0, bytesRead)
                         totalBytesRead += bytesRead
-
-                        val progress = if (contentLength > 0) {
-                            totalBytesRead.toFloat() / contentLength.toFloat()
-                        } else {
-                            0f
-                        }
-
-                        // Update progress every 1-2%
-                        if (progress - lastProgressUpdate >= 0.01f || progress >= 1.0f) {
-                            _downloadState.value = DownloadState.Downloading(
-                                progress = progress,
-                                bytesDownloaded = totalBytesRead,
-                                totalBytes = contentLength
-                            )
-                            lastProgressUpdate = progress
+                        
+                        val progress = if (totalExpected > 0) totalBytesRead.toFloat() / totalExpected else 0f
+                        if (progress - lastProgress >= 0.01f || progress >= 1.0f) {
+                            updateModelState(targetModel.filename, DownloadState.Downloading(progress, totalBytesRead, totalExpected))
+                            lastProgress = progress
                         }
                     }
                 }
             }
 
-            Log.i(TAG, "Download complete. Verifying...")
-            _downloadState.value = DownloadState.Verifying
+            updateModelState(targetModel.filename, DownloadState.Verifying)
 
-            // Verify file size
             val actualSize = tempFile.length()
-            if (actualSize != expectedSize && expectedSize > 0) {
-                Log.e(TAG, "File size mismatch. Expected: $expectedSize, Actual: $actualSize")
-                tempFile.delete()
-                val errorMsg = "Download corrupted. Please try again."
-                _downloadState.value = DownloadState.Error(errorMsg, true)
-                return@withContext Result.failure(Exception(errorMsg))
+            if (actualSize != totalExpected && totalExpected > 0) {
+                 val msg = "Download incomplete. Expected $totalExpected, got $actualSize"
+                 updateModelState(targetModel.filename, DownloadState.Error(msg, true))
+                 return@withContext
             }
 
-            // Move to final location
-            if (finalFile.exists()) {
-                finalFile.delete()
+            if (finalFile.exists()) finalFile.delete()
+            if (tempFile.renameTo(finalFile) || (tempFile.copyTo(finalFile, true).also { tempFile.delete() }.exists())) {
+                 updateModelState(targetModel.filename, DownloadState.Success)
+                 Log.i(TAG, "Download success: ${targetModel.name}")
+            } else {
+                 updateModelState(targetModel.filename, DownloadState.Error("Failed to save file", true))
             }
-            tempFile.renameTo(finalFile)
 
-            // Save preferences
-            prefs.edit()
-                .putBoolean(PREF_MODEL_DOWNLOADED, true)
-                .putString(PREF_MODEL_PATH, finalFile.absolutePath)
-                .apply()
-
-            Log.i(TAG, "Model downloaded and verified successfully")
-            _downloadState.value = DownloadState.Success
-
-            Result.success(Unit)
         } catch (e: Exception) {
             Log.e(TAG, "Download failed", e)
-            val errorMsg = e.message ?: "Unknown error occurred"
-            _downloadState.value = DownloadState.Error(errorMsg, true)
-            Result.failure(e)
+            updateModelState(targetModel.filename, DownloadState.Error(e.message ?: "Error", true))
         }
     }
 
@@ -203,13 +207,11 @@ class ModelRepository @Inject constructor(
         return try {
             val stat = StatFs(context.filesDir.path)
             stat.availableBlocksLong * stat.blockSizeLong
-        } catch (e: Exception) {
-            Log.e(TAG, "Error checking storage", e)
-            0L
-        }
+        } catch (e: Exception) { 0L }
     }
-
+    
     fun resetDownloadState() {
-        _downloadState.value = DownloadState.Idle
+        // Deprecated, resets SELECTED model state
+        updateModelState(_selectedModel.value.filename, DownloadState.Idle)
     }
 }

@@ -23,6 +23,10 @@ JNIEXPORT void JNICALL
 Java_com_mobilellama_native_LlamaEngine_nativeFree(
     JNIEnv* env, jobject thiz, jlong handle);
 
+JNIEXPORT void JNICALL
+Java_com_mobilellama_native_LlamaEngine_nativeClearCache(
+    JNIEnv* env, jobject thiz, jlong handle);
+
 #ifdef __cplusplus
 }
 #endif

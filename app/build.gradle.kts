@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.dagger.hilt.android")
     id("com.google.devtools.ksp")
 }
@@ -21,8 +22,21 @@ android {
             useSupportLibrary = true
         }
 
-        ndk {
-            abiFilters += listOf("arm64-v8a")
+    }
+
+    flavorDimensions += "abi"
+    productFlavors {
+        create("arm64") {
+            dimension = "abi"
+            ndk {
+                abiFilters += "arm64-v8a"
+            }
+        }
+        create("x86_64") {
+            dimension = "abi"
+            ndk {
+                abiFilters += "x86_64"
+            }
         }
     }
 
@@ -33,13 +47,13 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            buildConfigField("String", "MODEL_DOWNLOAD_URL", "\"https://github.com/USER/REPO/releases/download/TAG/tinyllama-1.1b-chat-q4_k_m.gguf\"")
-            buildConfigField("Long", "MODEL_SIZE_BYTES", "700000000L")
+            buildConfigField("String", "MODEL_DOWNLOAD_URL", "\"https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf\"")
+            buildConfigField("Long", "MODEL_SIZE_BYTES", "668788096L")
             buildConfigField("String", "MODEL_SHA256", "\"\"")
         }
         debug {
-            buildConfigField("String", "MODEL_DOWNLOAD_URL", "\"https://github.com/USER/REPO/releases/download/TAG/tinyllama-1.1b-chat-q4_k_m.gguf\"")
-            buildConfigField("Long", "MODEL_SIZE_BYTES", "700000000L")
+            buildConfigField("String", "MODEL_DOWNLOAD_URL", "\"https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf\"")
+            buildConfigField("Long", "MODEL_SIZE_BYTES", "668788096L")
             buildConfigField("String", "MODEL_SHA256", "\"\"")
         }
     }
@@ -49,9 +63,8 @@ android {
         compose = true
     }
 
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.4"
-    }
+    // composeOptions removed as it is handled by the plugin now
+
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -70,6 +83,9 @@ android {
     }
 
     packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }

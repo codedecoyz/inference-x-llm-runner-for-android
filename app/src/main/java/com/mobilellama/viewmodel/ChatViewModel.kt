@@ -44,7 +44,8 @@ class ChatViewModel @Inject constructor(
 
     init {
         loadMessages()
-        initializeModelIfNeeded()
+        // Initialize logic moved to observeModelChanges
+        observeModelChanges()
     }
 
     private fun loadMessages() {
@@ -59,13 +60,31 @@ class ChatViewModel @Inject constructor(
         }
     }
 
-    private fun initializeModelIfNeeded() {
+    private fun observeModelChanges() {
         viewModelScope.launch {
-            if (inferenceRepository.inferenceState.value is InferenceState.Uninitialized) {
-                val modelPath = modelRepository.getModelPath()
-                Log.i(TAG, "Initializing model from: $modelPath")
-                inferenceRepository.initializeModel(modelPath)
+            modelRepository.selectedModel.collect { model ->
+                Log.i(TAG, "Selected model changed to: ${model.name}")
+                // Stop any current generation
+                stopGeneration()
+                
+                // Reload engine
+                reloadModel()
             }
+        }
+    }
+
+    private suspend fun reloadModel() {
+        val modelPath = modelRepository.getModelPath()
+        val file = java.io.File(modelPath)
+        
+        if (file.exists()) {
+             Log.i(TAG, "Reloading model from: $modelPath")
+             inferenceRepository.release()
+             inferenceRepository.initializeModel(modelPath)
+        } else {
+             Log.w(TAG, "Selected model file not found: $modelPath")
+             // Maybe show error or navigate? 
+             // Sidebar navigation handles download check usually.
         }
     }
 
@@ -107,7 +126,12 @@ class ChatViewModel @Inject constructor(
         _currentAssistantMessage.value = ""
 
         try {
-            val result = inferenceRepository.generateResponse(userMessage) { token ->
+            // Build full prompt based on model type
+            val fullPrompt = getPromptStr()
+
+            Log.d(TAG, "Sending prompt to engine:\n$fullPrompt")
+
+            val result = inferenceRepository.generateResponse(fullPrompt) { token ->
                 withContext(Dispatchers.Main) {
                     _currentAssistantMessage.value += token
                 }
@@ -179,5 +203,43 @@ class ChatViewModel @Inject constructor(
 
     fun dismissError() {
         _errorMessage.value = null
+    }
+
+    private fun getPromptStr(): String {
+        val model = modelRepository.selectedModel.value
+        val history = _messages.value
+        val sb = StringBuilder()
+        
+        val SYSTEM_PROMPT = "You are a helpful, concise AI assistant running offline on an Android device. Answer briefly. If asked 'Who made you?', reply 'I was built by [Your Name] for the Mobile AI presentation.' If asked 'What is this?', reply 'This is a fully offline LLM running entirely on-device using the CPU.'"
+
+        when (model.promptType) {
+            com.mobilellama.data.model.PromptType.CHATML, com.mobilellama.data.model.PromptType.TINYLLAMA -> {
+                sb.append("<|im_start|>system\n$SYSTEM_PROMPT<|im_end|>\n")
+                history.forEach { msg ->
+                    sb.append("<|im_start|>${msg.role}\n${msg.content}<|im_end|>\n")
+                }
+                sb.append("<|im_start|>assistant\n")
+            }
+            
+            com.mobilellama.data.model.PromptType.PHI3 -> {
+                sb.append("<|system|>\n$SYSTEM_PROMPT<|end|>\n")
+                history.forEach { msg ->
+                    sb.append("<|${msg.role}|>\n${msg.content}<|end|>\n")
+                }
+                sb.append("<|assistant|>\n")
+            }
+            
+            com.mobilellama.data.model.PromptType.MISTRAL -> {
+                sb.append("<s>[INST] System: $SYSTEM_PROMPT\n\n")
+                history.forEach { msg ->
+                    if (msg.role == "user") {
+                        sb.append("${msg.content} [/INST]")
+                    } else {
+                        sb.append(" ${msg.content} </s>[INST] ")
+                    }
+                }
+            }
+        }
+        return sb.toString()
     }
 }

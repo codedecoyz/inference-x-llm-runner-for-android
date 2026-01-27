@@ -14,7 +14,18 @@ class LlamaEngine {
 
         init {
             try {
+                Log.i(TAG, "Attempting to load libomp (v4)...")
+                System.loadLibrary("omp")
+                Log.i(TAG, "Attempting to load libggml-base (v3)...")
+                System.loadLibrary("ggml-base")
+                Log.i(TAG, "Attempting to load libggml-cpu (v3)...")
+                System.loadLibrary("ggml-cpu")
+                Log.i(TAG, "Attempting to load libggml (v3)...")
+                System.loadLibrary("ggml")
+                Log.i(TAG, "Loaded libggml. Attempting to load libllama (v3)...")
                 System.loadLibrary("llama")
+                Log.i(TAG, "Loaded libllama. Attempting to load libllama_jni (v3)...")
+                System.loadLibrary("llama_jni")
                 Log.i(TAG, "Native library loaded successfully")
             } catch (e: UnsatisfiedLinkError) {
                 Log.e(TAG, "Failed to load native library", e)
@@ -27,6 +38,7 @@ class LlamaEngine {
     private external fun nativeInit(modelPath: String, contextSize: Int, numThreads: Int): Long
     private external fun nativeGenerate(handle: Long, prompt: String, maxTokens: Int, callback: (String) -> Unit): Boolean
     private external fun nativeStop(handle: Long)
+    private external fun nativeClearCache(handle: Long)
     private external fun nativeFree(handle: Long)
 
     /**
@@ -42,7 +54,13 @@ class LlamaEngine {
             Log.i(TAG, "Initializing model from: $modelPath")
 
             val contextSize = 2048
-            val numThreads = 4
+            // Use optimal thread count: 
+            // User requested ~50% usage or better. 
+            // Leaving 2 cores for UI/System is usually safe.
+            val availableProcessors = Runtime.getRuntime().availableProcessors()
+            val numThreads = (availableProcessors - 2).coerceAtLeast(1).coerceAtMost(8)
+
+            Log.i(TAG, "Initializing with threads: $numThreads (available: $availableProcessors)")
 
             handle = nativeInit(modelPath, contextSize, numThreads)
 
@@ -55,6 +73,16 @@ class LlamaEngine {
         } catch (e: Exception) {
             Log.e(TAG, "Failed to initialize model", e)
             Result.failure(e)
+        }
+    }
+
+    /**
+     * Clear the KV cache.
+     * Use this if you want to start a completely new conversation or regenerate prompt.
+     */
+    fun clearCache() {
+        if (isInitialized) {
+            nativeClearCache(handle)
         }
     }
 
