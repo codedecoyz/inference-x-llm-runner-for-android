@@ -2,29 +2,24 @@ package com.mobilellama.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Brand Palette
-val InfTeal = Color(0xFF006466)
-val InfTealDark = Color(0xFF065a60)
-val InfTealDeep = Color(0xFF0b525b)
-val InfBlueDark = Color(0xFF144552)
-val InfBlueDeep = Color(0xFF1b3a4b)
-val InfMidnight = Color(0xFF212f45)
-val InfPurpleDeep = Color(0xFF272640)  // Good for Surface
-val InfPurpleDark = Color(0xFF312244)
-val InfPurple = Color(0xFF3e1f47)
-val InfPurpleAccent = Color(0xFF4d194d) // Tertiary/Accent
+// Brand Palette - Deep Purple Neon
+val DeepBlackPurple = Color(0xFF10002b) // Background
+val DarkTonalPurple = Color(0xFF240046) // Surface
+val VibrantPurple = Color(0xFF7b2cbf)   // Primary
+val LightLavender = Color(0xFFc77dff)   // Secondary/Accent
+val HighlightWhitePurple = Color(0xFFe0aaff) // OnPrimary/Glow/Text
+val SubtleDivider = Color(0xFF3c096c)   // Outline
 
-// Semantic Aliases
-val PrimaryColor = InfTeal
-val OnPrimaryColor = Color.White
-val SecondaryColor = InfTealDeep
-val TertiaryColor = InfPurpleAccent
+// Semantic Mapping
+val PrimaryColor = VibrantPurple
+val OnPrimaryColor = HighlightWhitePurple
+val SecondaryColor = LightLavender
+val TertiaryColor = HighlightWhitePurple // Using Highlight for tertiary accents if needed
+val BackgroundDark = DeepBlackPurple
+val SurfaceDark = DarkTonalPurple
+val SurfaceVariantDark = DarkTonalPurple // match surface for now or use SubtleDivider if needed for borders
+val OnBackgroundDark = HighlightWhitePurple
+val OnSurfaceDark = HighlightWhitePurple
+val OnSurfaceVariant = LightLavender
+val OutlineColor = SubtleDivider
 
-// Backgrounds
-val BackgroundDark = InfBlueDeep // #1b3a4b
-val SurfaceDark = InfMidnight // #212f45
-val SurfaceVariantDark = InfPurpleDeep // #272640
-
-// Text
-val OnBackgroundDark = Color(0xFFE6E1E5)
-val OnSurfaceDark = Color(0xFFE6E1E5)

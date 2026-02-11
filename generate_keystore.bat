@@ -1,0 +1,1 @@
+keytool -genkey -v -keystore release-key.jks -keyalg RSA -keysize 2048 -validity 10000 -alias mobile-llama-key -storepass android -keypass android -dname "CN=Mobile Llama, OU=Mobile Llama, O=Mobile Llama, L=Unknown, S=Unknown, C=US"

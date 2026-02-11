@@ -3,7 +3,6 @@ package com.mobilellama.ui.theme
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
@@ -12,18 +11,19 @@ import androidx.compose.ui.graphics.Color
 private val DarkColorScheme = darkColorScheme(
     primary = PrimaryColor,
     onPrimary = OnPrimaryColor,
-    primaryContainer = InfTealDark,
-    onPrimaryContainer = Color.White,
+    primaryContainer = SurfaceDark, // Using SurfaceDark as container base
+    onPrimaryContainer = OnPrimaryColor,
     secondary = SecondaryColor,
-    onSecondary = Color.White,
+    onSecondary = DeepBlackPurple, // Contrast on secondary
     tertiary = TertiaryColor,
-    onTertiary = Color.White,
+    onTertiary = DeepBlackPurple,
     background = BackgroundDark,
     onBackground = OnBackgroundDark,
     surface = SurfaceDark,
     onSurface = OnSurfaceDark,
-    surfaceVariant = SurfaceVariantDark,
-    onSurfaceVariant = OnSurfaceDark,
+    surfaceVariant = SurfaceDark, // Keep consistent
+    onSurfaceVariant = OnSurfaceVariant,
+    outline = OutlineColor,
     error = Color(0xFFCF6679),
     onError = Color.Black
 )

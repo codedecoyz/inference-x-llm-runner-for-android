@@ -1,6 +1,7 @@
 package com.mobilellama.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,8 +17,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.mobilellama.R
+// Reverting HorizontalDivider to Divider if M3 version is older, or adding import if available. 
+// Standard M3 uses Divider in older versions, HorizontalDivider in newer. 
+// Safest is to use Divider or check version. Given error, let's assume Divider.
+import androidx.compose.material3.Divider // Use Divider for compatibility
 import com.mobilellama.data.model.AiModel
 import com.mobilellama.viewmodel.DownloadViewModel
 
@@ -31,7 +38,8 @@ fun Sidebar(
     val availableModels = viewModel.availableModels
 
     ModalDrawerSheet(
-        drawerContainerColor = MaterialTheme.colorScheme.surface
+        drawerContainerColor = MaterialTheme.colorScheme.surface, // NeonSurface (#240046)
+        drawerContentColor = MaterialTheme.colorScheme.onBackground
     ) {
         Column(
             modifier = Modifier
@@ -44,63 +52,89 @@ fun Sidebar(
                     painter = painterResource(id = R.drawable.infx_logo),
                     contentDescription = null,
                     modifier = Modifier.size(32.dp),
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = MaterialTheme.colorScheme.tertiary // NeonAccent
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
                     text = "Neural Engines",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.headlineSmall, // Larger header
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground // NeonTextMain
                 )
             }
             
             Spacer(modifier = Modifier.height(24.dp))
-            Divider()
+            Divider(color = MaterialTheme.colorScheme.surfaceVariant)
             Spacer(modifier = Modifier.height(16.dp))
 
             // Model List
             Text(
                 text = "AVAILABLE MODELS",
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.outline
+                color = MaterialTheme.colorScheme.onSurfaceVariant, // NeonTextSecondary
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.sp
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(availableModels) { model ->
+                    val isSelected = model == selectedModel
                     NavigationDrawerItem(
-                        label = { Text(model.name) },
-                        selected = model == selectedModel,
+                        label = { 
+                            Text(
+                                text = model.name,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                color = if (isSelected) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurfaceVariant
+                            ) 
+                        },
+                        selected = isSelected,
                         onClick = {
                             viewModel.selectModel(model)
                             onModelSelected(model)
                         },
                         icon = {
-                            if (model == selectedModel) {
-                                Icon(painterResource(id = R.drawable.infx_logo), contentDescription = null, modifier = Modifier.size(20.dp))
+                            if (isSelected) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.infx_logo), 
+                                    contentDescription = null, 
+                                    modifier = Modifier.size(20.dp),
+                                    tint = MaterialTheme.colorScheme.tertiary
+                                )
                             }
                         },
-                        badge = {
-                            // Optional: Show status dot?
-                        },
-                        modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                        colors = NavigationDrawerItemDefaults.colors(
+                            selectedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                            unselectedContainerColor = Color.Transparent
+                        ),
+                        modifier = Modifier
+                            .padding(NavigationDrawerItemDefaults.ItemPadding)
+                            .then(
+                                if (isSelected) {
+                                    Modifier.border(
+                                        width = 1.dp,
+                                        color = MaterialTheme.colorScheme.tertiary, // Neon Glow
+                                        shape = androidx.compose.foundation.shape.RoundedCornerShape(28.dp) // Default drawer item shape
+                                    )
+                                } else Modifier
+                            )
                     )
                 }
             }
             
             Spacer(modifier = Modifier.weight(1f))
             
-            Divider()
+            Divider(color = MaterialTheme.colorScheme.surfaceVariant)
             Spacer(modifier = Modifier.height(16.dp))
             
             // Footer
             NavigationDrawerItem(
-                label = { Text("Manage Models") },
+                label = { Text("Manage Models", color = MaterialTheme.colorScheme.onBackground) },
                 selected = false,
                 onClick = onManageModels,
-                icon = { Icon(Icons.Default.Settings, contentDescription = null) }
+                icon = { Icon(Icons.Default.Settings, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary) }
             )
         }
     }
