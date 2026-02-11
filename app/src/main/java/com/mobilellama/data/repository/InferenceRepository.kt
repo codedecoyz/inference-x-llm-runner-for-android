@@ -120,7 +120,7 @@ You are a helpful assistant.</s>
      */
     suspend fun generateResponse(
         prompt: String,
-        onToken: suspend (String) -> Unit
+        onToken: (String) -> Unit
     ): Result<Unit> = withContext(Dispatchers.IO) {
         try {
             val engine = llamaEngine
@@ -176,10 +176,8 @@ You are a helpful assistant.</s>
                     } else {
                         // Update state
                         _inferenceState.value = InferenceState.Generating(tokenCount)
-                        // Call user callback (will be suspended on main thread)
-                        kotlinx.coroutines.runBlocking {
-                            onToken(token)
-                        }
+                        // Call user callback direct (non-blocking)
+                        onToken(token)
                     }
                 }
             )

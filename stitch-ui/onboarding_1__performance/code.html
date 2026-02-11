@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>InferenceX Onboarding - Performance</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#9c3fe9",
+                        "background-light": "#f7f6f8",
+                        "background-dark": "#10002b",
+                        "deep-purple": "#10002b",
+                        "accent-glow": "#e0aaff",
+                        "headline-purple": "#c77dff",
+                        "body-purple": "#9d4edd",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background-color: #10002b;
+        }
+        .chip-glow {
+            box-shadow: 0 0 60px 20px rgba(224, 170, 255, 0.15);
+        }
+        .purple-gradient-btn {
+            background: linear-gradient(135deg, #9c3fe9 0%, #c77dff 100%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-dark text-white font-display overflow-hidden">
+<!-- Main Container -->
+<div class="relative flex h-screen w-full flex-col justify-between p-6">
+<!-- Top Navigation Area -->
+<div class="flex items-center justify-end w-full pt-4">
+<button class="text-body-purple text-sm font-medium tracking-wide uppercase">Skip</button>
+</div>
+<!-- Central Hero Visual -->
+<div class="flex flex-col items-center justify-center flex-1">
+<div class="relative w-64 h-64 flex items-center justify-center">
+<!-- Decorative Glow Background -->
+<div class="absolute inset-0 bg-accent-glow/10 rounded-full blur-[80px]"></div>
+<!-- 3D-style Microchip Icon Placeholder -->
+<div class="relative z-10 w-48 h-48 bg-[#1a113a] rounded-xl border border-accent-glow/30 flex items-center justify-center chip-glow overflow-hidden">
+<!-- Circuit Patterns -->
+<div class="absolute inset-0 opacity-20 pointer-events-none" style="background-image: radial-gradient(circle at 2px 2px, #e0aaff 1px, transparent 0); background-size: 20px 20px;">
+</div>
+<span class="material-symbols-outlined text-accent-glow text-8xl" style="font-variation-settings: 'FILL' 1, 'wght' 200;">
+                        memory
+                    </span>
+<!-- Inner Core Glow -->
+<div class="absolute w-12 h-12 bg-accent-glow/20 blur-xl rounded-full"></div>
+</div>
+<!-- Floating Elements -->
+<div class="absolute top-0 right-8 w-4 h-4 bg-primary/40 rounded-full blur-sm"></div>
+<div class="absolute bottom-4 left-10 w-6 h-6 bg-headline-purple/30 rounded-full blur-md"></div>
+</div>
+</div>
+<!-- Content Area -->
+<div class="flex flex-col items-center text-center space-y-4 mb-12">
+<h1 class="text-headline-purple text-4xl font-bold tracking-tight px-4 leading-[1.1]">
+                Local Inference
+            </h1>
+<p class="text-body-purple text-lg font-normal leading-relaxed px-6 max-w-sm">
+                Run world-class AI models directly on your device hardware. No cloud. No latency.
+            </p>
+<!-- Pagination Dots -->
+<div class="flex gap-2 pt-6">
+<div class="h-1.5 w-8 rounded-full bg-primary"></div>
+<div class="h-1.5 w-1.5 rounded-full bg-body-purple/30"></div>
+<div class="h-1.5 w-1.5 rounded-full bg-body-purple/30"></div>
+</div>
+</div>
+<!-- Action Area -->
+<div class="flex flex-col w-full space-y-4 pb-8">
+<button class="purple-gradient-btn w-full py-4 text-white font-bold text-lg rounded-xl shadow-[0_4px_20px_rgba(156,63,233,0.4)] active:scale-[0.98] transition-transform">
+                Next
+            </button>
+</div>
+<!-- Decorative UI elements -->
+<div class="fixed top-[-10%] left-[-10%] w-[50%] h-[50%] bg-primary/5 rounded-full blur-[120px] -z-10"></div>
+<div class="fixed bottom-[-5%] right-[-5%] w-[40%] h-[40%] bg-accent-glow/5 rounded-full blur-[100px] -z-10"></div>
+</div>
+<!-- Image Asset References (for documentation) -->
+<!-- 
+        data-alt="A high-detail glowing 3D microchip with purple circuit patterns" 
+        data-alt="Deep purple futuristic abstract gradient background"
+    -->
+</body></html>

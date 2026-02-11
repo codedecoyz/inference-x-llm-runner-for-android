@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Material 3 Model Hub</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#c77dff",
+                        "surface": "#10002b",
+                        "surface-variant": "#240046",
+                        "outline": "#3c096c",
+                        "on-surface": "#e0aaff",
+                        "on-surface-variant": "#9d4edd",
+                        "progress-track": "#e0aaff",
+                        "progress-bg": "#10002b",
+                    },
+                    fontFamily: {
+                        "sans": ["Roboto", "sans-serif"]
+                    }
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        @layer base {
+            body {
+                @apply bg-surface text-white font-sans;
+            }
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.filled {
+            font-variation-settings: 'FILL' 1;
+        }.m3-body-large { font-size: 1rem; line-height: 1.5rem; letter-spacing: 0.5px; }
+        .m3-label-small { font-size: 0.6875rem; line-height: 1rem; letter-spacing: 0.5px; font-weight: 500; }
+        .m3-title-large { font-size: 1.375rem; line-height: 1.75rem; }
+        .m3-outlined-card {
+            @apply border border-outline rounded-[12px] bg-surface-variant overflow-hidden;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-screen pb-20">
+<div class="relative flex flex-col w-full">
+<div class="flex items-center px-4 py-4 sticky top-0 z-50 bg-surface">
+<button class="p-2 -ml-2">
+<span class="material-symbols-outlined text-white">arrow_back</span>
+</button>
+<h1 class="ml-4 m3-title-large font-medium">Model Management HUB</h1>
+<div class="ml-auto">
+<button class="p-2">
+<span class="material-symbols-outlined text-white">more_vert</span>
+</button>
+</div>
+</div>
+<div class="flex w-full border-b border-outline mb-4">
+<button class="flex-1 py-3 text-center border-b-2 border-primary">
+<span class="m3-label-small text-primary uppercase">Installed</span>
+</button>
+<button class="flex-1 py-3 text-center border-b-2 border-transparent">
+<span class="m3-label-small text-on-surface-variant uppercase">Available</span>
+</button>
+</div>
+<main class="px-4 space-y-6">
+<section>
+<p class="m3-label-small text-on-surface-variant uppercase mb-3 px-1">Downloaded Models</p>
+<div class="space-y-3">
+<div class="m3-outlined-card p-4 flex gap-4">
+<div class="flex-1">
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-primary text-lg filled">check_circle</span>
+<span class="m3-label-small text-primary uppercase">Active</span>
+</div>
+<h2 class="m3-body-large font-bold text-white mb-1">Llama-3-8B</h2>
+<p class="m3-label-small text-on-surface-variant">Meta • 8B parameters • 4.7GB</p>
+</div>
+<div class="w-16 h-16 rounded-lg bg-cover bg-center shrink-0 border border-outline" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuC5QfK4TQidICV3JdAbzHvDa4cYCrFIsbckVK1M_Vpu89wTO_lpIYfIIIvvNwQJth3rpi7yZ_j4fYA_PFX5ueoUcOW9NNrrQtlywCjoBjqMgl6Gkqk_HV6jNRacNCEEG4h2BMU-Sp6L1oGDldI626jkhBHI-v0l7UA-t6OYEpWJVn_QMQzO94FQinpM1CQqOFyXxsDk4irfxiSbxyqZF63LTC_C1DxQY92ZGObtTnLUjlrD7bNq45H9GgQVCmgfblG_L2Eoh6lDvbOM");'></div>
+</div>
+<div class="m3-outlined-card p-4 flex gap-4">
+<div class="flex-1">
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-primary text-lg filled">check_circle</span>
+<span class="m3-label-small text-primary uppercase">Ready</span>
+</div>
+<h2 class="m3-body-large font-bold text-white mb-1">Mistral-7B-v0.3</h2>
+<p class="m3-label-small text-on-surface-variant">Mistral AI • 7B parameters • 4.1GB</p>
+</div>
+<div class="w-16 h-16 rounded-lg bg-cover bg-center shrink-0 border border-outline" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDOBXpetB9PwXSauqaSPg8OvcS2kxqbXaUnoauCuH4drTDtEKLcbhV_qE20U6AwsmxxHQVCir0vgAtyrysw08oo6vHEfzp3vIy14FlIr7lcl9JthAhCccdU8xnmBTJ5IzPuXt7sG0XI_r5TGerzXJ60ThK80s3GSWaY5OVxp0pekMpAN5rYtN0RMU-wxEdZVGO2U9LHR7cuPwc-GVWJxrjNpHIB72Ti1JMeBdG1OwpQ8gliwufDZLTX49Alm_mNgLSXqd_7i1NUhxKQ");'></div>
+</div>
+</div>
+</section>
+<section>
+<p class="m3-label-small text-on-surface-variant uppercase mb-3 px-1">Active Downloads</p>
+<div class="m3-outlined-card p-4">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h2 class="m3-body-large font-bold text-white mb-1">Gemma-2-9B</h2>
+<p class="m3-label-small text-on-surface-variant">Google • 4.2 GB / 5.1 GB</p>
+</div>
+<span class="m3-label-small text-progress-track">82%</span>
+</div>
+<div class="h-1 w-full bg-progress-bg rounded-full overflow-hidden">
+<div class="h-full bg-progress-track rounded-full" style="width: 82%"></div>
+</div>
+</div>
+</section>
+<section>
+<p class="m3-label-small text-on-surface-variant uppercase mb-3 px-1">Library</p>
+<div class="m3-outlined-card p-4 flex gap-4">
+<div class="flex-1">
+<h2 class="m3-body-large font-bold text-white mb-1">Phi-3-Mini</h2>
+<p class="m3-label-small text-on-surface-variant mb-4">Microsoft • 3.8B parameters</p>
+<button class="bg-[#5a189a] text-white px-4 py-1.5 rounded-full flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">download</span>
+<span class="m3-label-small uppercase">Download</span>
+</button>
+</div>
+<div class="w-16 h-16 rounded-lg bg-cover bg-center shrink-0 border border-outline" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDTHKsHkRMBKwKr9TmPsyOR6_P3M0PxkNVYJlD2mq7E1u7Ps9G8IqRmzF4Q7koNGyniYb0Ou-L9m8hVZLk0owZ5FmOjHF2BoKlQMJX5oc9oLwP-3SorqCB6kK-eBDNrGpW7rbXMShaKj6trkhpljt9-_F7wK8GFJFjqo5Nl_pdyESfxVtI4Nt1ucodwLplBeiW5CRNGNKPwVl8TEh7crzJ0Km30-OgwRDqPWOSuqhVjKK1dQrx9-8haEsTQ1Ca7mCGGTy6UQ7xjUMAD");'></div>
+</div>
+</section>
+</main>
+<nav class="fixed bottom-0 left-0 right-0 h-20 bg-surface-variant border-t border-outline flex items-center justify-around px-2 z-[100]">
+<button class="flex flex-col items-center gap-1 flex-1">
+<div class="px-5 py-1 rounded-full">
+<span class="material-symbols-outlined text-on-surface-variant">chat_bubble</span>
+</div>
+<span class="m3-label-small text-on-surface-variant">Chat</span>
+</button>
+<button class="flex flex-col items-center gap-1 flex-1">
+<div class="px-5 py-1 rounded-full bg-outline">
+<span class="material-symbols-outlined text-primary filled">database</span>
+</div>
+<span class="m3-label-small text-white font-bold">Models</span>
+</button>
+<button class="flex flex-col items-center gap-1 flex-1">
+<div class="px-5 py-1 rounded-full">
+<span class="material-symbols-outlined text-on-surface-variant">history</span>
+</div>
+<span class="m3-label-small text-on-surface-variant">History</span>
+</button>
+<button class="flex flex-col items-center gap-1 flex-1">
+<div class="px-5 py-1 rounded-full">
+<span class="material-symbols-outlined text-on-surface-variant">settings</span>
+</div>
+<span class="m3-label-small text-on-surface-variant">Settings</span>
+</button>
+</nav>
+</div>
+
+</body></html>

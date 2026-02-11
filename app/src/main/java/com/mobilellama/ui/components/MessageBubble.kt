@@ -1,6 +1,8 @@
 package com.mobilellama.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -8,21 +10,41 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mobilellama.data.model.Message
+import com.mobilellama.ui.theme.LightLavender
+import com.mobilellama.ui.theme.VibrantPurple
+import com.mobilellama.ui.theme.HighlightWhitePurple
+import com.mobilellama.ui.theme.SurfaceDark
 import java.text.SimpleDateFormat
 import java.util.*
 
 @Composable
 fun MessageBubble(message: Message) {
     val isUser = message.role == "user"
-    val backgroundColor = if (isUser) {
-        Color(0xFFBBDEFB) // Light blue for user
+    
+    // Styling
+    val shape = if (isUser) {
+        RoundedCornerShape(20.dp, 20.dp, 4.dp, 20.dp)
     } else {
-        Color(0xFFE0E0E0) // Gray for assistant
+        RoundedCornerShape(20.dp, 20.dp, 20.dp, 4.dp)
+    }
+
+    val backgroundModifier = if (isUser) {
+        Modifier.background(
+            brush = Brush.linearGradient(
+                colors = listOf(VibrantPurple, LightLavender) // Gradient for User: Vibrant -> Lavender
+            ),
+            shape = shape
+        )
+    } else {
+        Modifier
+            .background(SurfaceDark, shape) // Tonal for AI
+            .border(BorderStroke(1.dp, VibrantPurple), shape) // Border for AI
     }
 
     val alignment = if (isUser) Alignment.End else Alignment.Start
@@ -36,35 +58,27 @@ fun MessageBubble(message: Message) {
             .padding(horizontal = 8.dp, vertical = 4.dp),
         horizontalAlignment = alignment
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start,
-            modifier = Modifier.padding(bottom = 4.dp)
-        ) {
-            Text(
-                text = if (isUser) "YOU" else "ASSISTANT",
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = timeString,
-                fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-
         Box(
             modifier = Modifier
-                .widthIn(max = 300.dp)
-                .background(backgroundColor, RoundedCornerShape(12.dp))
-                .padding(12.dp)
+                .widthIn(max = 280.dp)
+                .then(backgroundModifier)
+                .padding(16.dp)
         ) {
             Text(
                 text = message.content,
-                color = Color.Black
+                color = Color.White,
+                fontSize = 16.sp,
+                lineHeight = 22.sp
             )
         }
+        
+        Spacer(modifier = Modifier.height(4.dp))
+        
+        Text(
+            text = timeString,
+            fontSize = 10.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha=0.6f),
+            modifier = Modifier.padding(horizontal = 4.dp)
+        )
     }
 }

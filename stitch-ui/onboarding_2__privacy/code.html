@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>InferenceX - Privacy Onboarding</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#d39eff",
+                        "background-light": "#f7f5f8",
+                        "background-dark": "#10002b",
+                        "brand-deep": "#10002b",
+                        "brand-accent": "#c77dff",
+                        "brand-headline": "#e0aaff",
+                        "brand-description": "#9d4edd",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #10002b;
+        }
+        .shield-glow {
+            filter: drop-shadow(0 0 25px rgba(199, 125, 255, 0.4));
+        }
+        .x-glow {
+            filter: drop-shadow(0 0 10px rgba(211, 158, 255, 0.8));
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-white antialiased overflow-hidden">
+<div class="relative flex h-screen w-full flex-col max-w-[430px] mx-auto overflow-hidden">
+<!-- Top App Bar / Navigation -->
+<div class="flex items-center p-6 justify-between z-10">
+<button class="text-brand-description hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[28px]">chevron_left</span>
+</button>
+<button class="text-brand-description text-sm font-medium tracking-wide uppercase">
+                Skip
+            </button>
+</div>
+<!-- Main Content Area -->
+<div class="flex flex-1 flex-col items-center justify-center px-8 pb-12">
+<!-- Hero Visual: Shield with X -->
+<div class="relative mb-12 flex items-center justify-center">
+<!-- Outer decorative rings -->
+<div class="absolute w-64 h-64 border border-brand-accent/10 rounded-full animate-pulse"></div>
+<div class="absolute w-48 h-48 border border-brand-accent/20 rounded-full"></div>
+<!-- Main Shield Container -->
+<div class="relative w-40 h-40 bg-gradient-to-br from-[#240046] to-[#10002b] rounded-3xl border border-brand-accent/30 flex items-center justify-center shield-glow rotate-3">
+<div class="absolute inset-0 bg-primary/5 rounded-3xl blur-xl"></div>
+<div class="text-brand-accent flex items-center justify-center">
+<span class="material-symbols-outlined text-[100px] leading-none select-none" style="font-variation-settings: 'FILL' 0, 'wght' 200;">
+                            shield
+                        </span>
+<!-- The Glowing X center -->
+<div class="absolute inset-0 flex items-center justify-center pt-2">
+<span class="text-primary font-bold text-4xl x-glow font-display">X</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Text Content -->
+<div class="text-center space-y-4 max-w-sm">
+<h1 class="text-brand-headline text-4xl font-bold tracking-tight">
+                    Private &amp; Secure
+                </h1>
+<p class="text-brand-description text-lg leading-relaxed font-medium">
+                    Your prompts and data never leave your phone. Total isolation for total peace of mind.
+                </p>
+</div>
+</div>
+<!-- Bottom Controls -->
+<div class="px-8 pb-12 space-y-8">
+<!-- Progress Dots -->
+<div class="flex flex-row items-center justify-center gap-3">
+<div class="h-2 w-2 rounded-full bg-brand-description/30"></div>
+<div class="h-2 w-6 rounded-full bg-primary shadow-[0_0_10px_rgba(211,158,255,0.5)]"></div>
+<div class="h-2 w-2 rounded-full bg-brand-description/30"></div>
+</div>
+<!-- CTA Button -->
+<div class="flex flex-col gap-4">
+<button class="w-full bg-primary hover:bg-primary/90 text-background-dark font-bold text-lg py-4 rounded-xl transition-all active:scale-[0.98] shadow-lg shadow-primary/20">
+                    Continue
+                </button>
+</div>
+<!-- Safe Area Spacer for iOS -->
+<div class="h-4"></div>
+</div>
+<!-- Background Decorative Elements -->
+<div class="absolute -top-24 -right-24 w-64 h-64 bg-primary/10 rounded-full blur-[80px] pointer-events-none"></div>
+<div class="absolute -bottom-24 -left-24 w-64 h-64 bg-brand-accent/10 rounded-full blur-[80px] pointer-events-none"></div>
+</div>
+</body></html>

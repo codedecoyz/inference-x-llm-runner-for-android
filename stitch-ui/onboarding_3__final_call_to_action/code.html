@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>InferenceX Onboarding - Final Step</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#a64fee",
+                        "background-light": "#f7f6f8",
+                        "background-dark": "#10002b",
+                        "brand-headline": "#e0aaff",
+                        "brand-description": "#c77dff",
+                        "gradient-start": "#5a189a",
+                        "gradient-end": "#9d4edd",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .glow-shadow {
+            box-shadow: 0 10px 25px -5px rgba(166, 79, 238, 0.5);
+        }
+        .pulse-effect {
+            animation: pulse 3s infinite ease-in-out;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.8; filter: drop-shadow(0 0 10px rgba(166, 79, 238, 0.3)); }
+            50% { transform: scale(1.05); opacity: 1; filter: drop-shadow(0 0 30px rgba(166, 79, 238, 0.6)); }
+            100% { transform: scale(1); opacity: 0.8; filter: drop-shadow(0 0 10px rgba(166, 79, 238, 0.3)); }
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-white antialiased font-display">
+<!-- Mobile Container (Simulating Phone Viewport) -->
+<div class="relative flex h-screen w-full max-w-[430px] mx-auto flex-col bg-background-light dark:bg-background-dark overflow-hidden">
+<!-- Status Bar Spacer (iOS Style) -->
+<div class="h-12 w-full"></div>
+<!-- Top Navigation / Close -->
+<div class="flex items-center justify-end px-6 py-2">
+<button class="text-brand-description hover:text-white transition-colors">
+<span class="material-symbols-outlined text-2xl">close</span>
+</button>
+</div>
+<!-- Main Content Area -->
+<div class="flex flex-col flex-grow items-center justify-center px-8 text-center">
+<!-- Central Animated Logo Section -->
+<div class="relative w-full aspect-square flex items-center justify-center mb-12">
+<!-- Background Glow Orbs -->
+<div class="absolute w-64 h-64 bg-primary/20 rounded-full blur-3xl"></div>
+<!-- Stylized INF-X Logo -->
+<div class="pulse-effect relative flex items-center justify-center w-48 h-48 bg-gradient-to-br from-gradient-start to-gradient-end rounded-xl overflow-hidden shadow-2xl">
+<div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
+<span class="text-white text-7xl font-bold tracking-tighter">INF-X</span>
+<!-- Decorative scanning line element -->
+<div class="absolute top-0 left-0 w-full h-1 bg-white/30 blur-sm"></div>
+</div>
+</div>
+<!-- Typography Section -->
+<div class="space-y-4">
+<h1 class="text-brand-headline tracking-tight text-4xl font-bold leading-tight">
+                    Ready to Begin
+                </h1>
+<p class="text-brand-description text-lg font-normal leading-relaxed px-4">
+                    Download your first model and start chatting instantly.
+                </p>
+</div>
+</div>
+<!-- Bottom Actions Section -->
+<div class="flex flex-col items-center gap-8 pb-12 pt-6 px-8">
+<!-- Progress Indicator Dots -->
+<div class="flex flex-row items-center justify-center gap-3">
+<div class="h-2 w-2 rounded-full bg-primary/20"></div>
+<div class="h-2 w-2 rounded-full bg-primary/20"></div>
+<div class="h-2 w-8 rounded-full bg-primary"></div>
+</div>
+<!-- Primary CTA Button -->
+<button class="w-full h-16 bg-gradient-to-r from-gradient-start to-gradient-end rounded-full text-white text-xl font-bold glow-shadow active:scale-95 transition-transform flex items-center justify-center gap-2">
+                Get Started
+                <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+<!-- Secondary Action -->
+<button class="text-brand-description/60 text-sm font-medium hover:text-brand-description transition-colors uppercase tracking-widest">
+                Restore Purchase
+            </button>
+</div>
+<!-- Home Indicator (iOS Style) -->
+<div class="flex justify-center pb-2">
+<div class="w-32 h-1.5 bg-white/20 rounded-full"></div>
+</div>
+</div>
+<!-- Background Decoration (Fixed to screen for depth) -->
+<div class="fixed top-0 left-0 w-full h-full pointer-events-none -z-10 overflow-hidden">
+<div class="absolute -top-24 -left-24 w-96 h-96 bg-primary/10 rounded-full blur-[120px]"></div>
+<div class="absolute bottom-0 right-0 w-[500px] h-[500px] bg-gradient-start/10 rounded-full blur-[150px]"></div>
+</div>
+</body></html>

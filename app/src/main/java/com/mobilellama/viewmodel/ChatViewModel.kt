@@ -132,7 +132,8 @@ class ChatViewModel @Inject constructor(
             Log.d(TAG, "Sending prompt to engine:\n$fullPrompt")
 
             val result = inferenceRepository.generateResponse(fullPrompt) { token ->
-                withContext(Dispatchers.Main) {
+                // Dispatch updates to Main thread via viewModelScope
+                viewModelScope.launch(Dispatchers.Main) {
                     _currentAssistantMessage.value += token
                 }
             }
