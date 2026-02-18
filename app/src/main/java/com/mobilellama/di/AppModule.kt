@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.room.Room
 import com.mobilellama.data.database.AppDatabase
+import com.mobilellama.data.database.ChatDao
 import com.mobilellama.data.database.MessageDao
 import dagger.Module
 import dagger.Provides
@@ -33,12 +34,20 @@ object AppModule {
             context,
             AppDatabase::class.java,
             "messages.db"
-        ).build()
+        )
+            .fallbackToDestructiveMigration()
+            .build()
     }
 
     @Provides
     @Singleton
     fun provideMessageDao(database: AppDatabase): MessageDao {
         return database.messageDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideChatDao(database: AppDatabase): ChatDao {
+        return database.chatDao()
     }
 }
