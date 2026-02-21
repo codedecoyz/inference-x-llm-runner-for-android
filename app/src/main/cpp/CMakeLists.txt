@@ -30,10 +30,15 @@ add_library(ggml-cpu SHARED IMPORTED)
 set_target_properties(ggml-cpu PROPERTIES IMPORTED_LOCATION
     ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/${ANDROID_ABI}/libggml-cpu.so)
 
+# Link prebuilt libggml-vulkan.so
+add_library(ggml-vulkan SHARED IMPORTED)
+set_target_properties(ggml-vulkan PROPERTIES IMPORTED_LOCATION
+    ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/${ANDROID_ABI}/libggml-vulkan.so)
+
 # Link prebuilt libggml.so (dependency of llama)
 add_library(ggml SHARED IMPORTED)
 set_target_properties(ggml PROPERTIES IMPORTED_LOCATION
     ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/${ANDROID_ABI}/libggml.so)
 
 # Link JNI bridge with llama.cpp
-target_link_libraries(llama_jni llama ggml log)
+target_link_libraries(llama_jni llama ggml ggml-vulkan log)

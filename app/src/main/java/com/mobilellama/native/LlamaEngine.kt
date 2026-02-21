@@ -20,6 +20,7 @@ class LlamaEngine {
                 System.loadLibrary("ggml-base")
                 Log.i(TAG, "Attempting to load libggml-cpu (v3)...")
                 System.loadLibrary("ggml-cpu")
+                System.loadLibrary("ggml-vulkan") // ⚡ Vulkan Hardware Acceleration
                 Log.i(TAG, "Attempting to load libggml (v3)...")
                 System.loadLibrary("ggml")
                 Log.i(TAG, "Loaded libggml. Attempting to load libllama (v3)...")
