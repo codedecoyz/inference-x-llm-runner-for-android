@@ -139,13 +139,14 @@ class ChatViewModel @Inject constructor(
                     tokenCount = trimmed.length / 4
                 )
 
-                withContext(Dispatchers.IO) {
-                    messageDao.upsert(message)
+                val insertedId = withContext(Dispatchers.IO) {
+                    val id = messageDao.insertMessage(message)
                     chatDao.updateLastMessageAt(chatId, now)
+                    id
                 }
 
-                // Update UI optimistically
-                _messages.value = _messages.value + message
+                // Update UI with real DB id
+                _messages.value = _messages.value + message.copy(id = insertedId)
                 paginationOffset++
 
                 // Generate assistant response
@@ -189,12 +190,13 @@ class ChatViewModel @Inject constructor(
                     tokenCount = responseText.length / 4
                 )
 
-                withContext(Dispatchers.IO) {
-                    messageDao.upsert(assistantMessage)
+                val insertedId = withContext(Dispatchers.IO) {
+                    val id = messageDao.insertMessage(assistantMessage)
                     chatDao.updateLastMessageAt(chatId, now)
+                    id
                 }
 
-                _messages.value = _messages.value + assistantMessage
+                _messages.value = _messages.value + assistantMessage.copy(id = insertedId)
                 paginationOffset++
                 _currentAssistantMessage.value = ""
 
@@ -286,12 +288,13 @@ class ChatViewModel @Inject constructor(
                     tokenCount = partial.length / 4
                 )
 
-                withContext(Dispatchers.IO) {
-                    messageDao.upsert(assistantMessage)
+                val insertedId = withContext(Dispatchers.IO) {
+                    val id = messageDao.insertMessage(assistantMessage)
                     chatDao.updateLastMessageAt(chatId, now)
+                    id
                 }
 
-                _messages.value = _messages.value + assistantMessage
+                _messages.value = _messages.value + assistantMessage.copy(id = insertedId)
                 paginationOffset++
                 _currentAssistantMessage.value = ""
             }

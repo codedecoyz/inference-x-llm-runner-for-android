@@ -54,13 +54,13 @@ class LlamaEngine {
             Log.i(TAG, "Initializing model from: $modelPath")
 
             val contextSize = 2048
-            // Use optimal thread count: 
-            // User requested ~50% usage or better. 
-            // Leaving 2 cores for UI/System is usually safe.
+            // For typical ARM big.LITTLE architectures, using all cores (or cores-2) 
+            // is a known anti-pattern for llama.cpp because the slow LITTLE cores 
+            // bottleneck synchronization. Capping at 4 targets the performance cores.
             val availableProcessors = Runtime.getRuntime().availableProcessors()
-            val numThreads = (availableProcessors - 2).coerceAtLeast(1).coerceAtMost(8)
+            val numThreads = if (availableProcessors >= 8) 4 else availableProcessors.coerceAtLeast(1).coerceAtMost(4)
 
-            Log.i(TAG, "Initializing with threads: $numThreads (available: $availableProcessors)")
+            Log.i(TAG, "Initializing with threads: $numThreads (available: $availableProcessors) - optimized for big cores")
 
             handle = nativeInit(modelPath, contextSize, numThreads)
 
