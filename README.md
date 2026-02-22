@@ -31,15 +31,23 @@ Initially, the app could only run one specific model. But users wanted choice. T
 **The Refactor:**
 We tore down the single-model architecture. We rebuilt the `ModelRepository` from scratch to support **Parallel Downloads** and **Dynamic State Management**. Now, Inference-x isn't just a player; it's a manager. You can download three models at once, switch between them instantly, and the neural engine hot-reloads in milliseconds.
 
+### The Expansion: Memory, Context & GPU Offloading
+As conversations grew, the strict 2048 token limit of mobile models became a wall. And while the CPU handled inference *okay*, users were hungry for more speed.
+**The Solution:**
+We implemented an **Auto-Compressing Memory Manager** backed by Room Database that silently summarizes your old messages when you reach context limits, allowing for infinite chats. Then, we shattered the speed limit by cross-compiling `llama.cpp` with the Android NDK to load the **Vulkan SDK**, bypassing the CPU to offload 100% of the transformer math directly into the phone's native GPU VRAM.
+
 ---
 
 ## ⚡ Key Features
 
 - **True Offline AI**: Once downloaded, the model lives on your device. Airplane mode? No problem.
+- **Hardware Acceleration**: Built-in native **Vulkan GPU** support for maximum token generation speeds.
+- **Infinite Multi-Chat**: Create multiple chat threads per model.
+- **Auto-Memory Compression**: Long conversations are automatically summarized via LLM reasoning to prevent context overflow.
 - **Multi-Model Support**: Switch between TinyLlama, Qwen, Phi, and more.
 - **Parallel Downloads**: Manage your AI fleet with a robust, concurrent download manager.
 - **Privacy First**: Your chats never leave your device.
-- **Appealing UI**: A "Premium Teal" aesthetic with smooth animations and a dedicated Navigation Drawer.
+- **Appealing UI**: A "Deep Purple Neon" aesthetic with smooth animations and a dedicated Navigation Drawer.
 
 ## 🛠️ Technical Stack
 
