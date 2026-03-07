@@ -6,18 +6,16 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Surface
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
 import com.mobilellama.data.repository.ModelRepository
-import com.mobilellama.ui.screens.ChatListScreen
 import com.mobilellama.ui.screens.ChatScreen
 import com.mobilellama.ui.screens.OnboardingScreen
 import com.mobilellama.ui.screens.SplashScreen
@@ -54,19 +52,18 @@ fun MobileLlamaApp(modelRepository: ModelRepository) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
+    // Start with Splash Screen
+    val startDestination = "splash"
     val context = androidx.compose.ui.platform.LocalContext.current
     val prefs = remember { context.getSharedPreferences("app_prefs", android.content.Context.MODE_PRIVATE) }
-
+    
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
             com.mobilellama.ui.components.Sidebar(
-                onModelSelected = {
+                onModelSelected = { 
                     scope.launch { drawerState.close() }
-                    // Navigate to chatList for the new model
-                    navController.navigate("chatList") {
-                        popUpTo("chatList") { inclusive = true }
-                    }
+                    // ChatViewModel will react to repo change hopefully, or we might need to force reload
                 },
                 onManageModels = {
                     scope.launch { drawerState.close() }
@@ -84,73 +81,55 @@ fun MobileLlamaApp(modelRepository: ModelRepository) {
                     onAnimationFinished = {
                         val onboardingComplete = prefs.getBoolean("onboarding_complete", false)
                         val modelDownloaded = modelRepository.isModelDownloaded()
-
+                        
                         val nextScreen = when {
                             !onboardingComplete -> "onboarding"
-                            modelDownloaded -> "chatList"
-                            else -> "manager"
+                            modelDownloaded -> "chat"
+                            else -> "manager" // Go to manager instead of old download screen
                         }
-
+                        
                         navController.navigate(nextScreen) {
                             popUpTo("splash") { inclusive = true }
                         }
                     }
                 )
             }
-
+            
             composable("onboarding") {
                 OnboardingScreen(
                     onOnboardingComplete = {
                         prefs.edit().putBoolean("onboarding_complete", true).apply()
-                        val next = if (modelRepository.isModelDownloaded()) "chatList" else "manager"
+                        val next = if (modelRepository.isModelDownloaded()) "chat" else "manager"
                         navController.navigate(next) {
                             popUpTo("onboarding") { inclusive = true }
                         }
                     }
                 )
             }
-
+    
             composable("download") {
+                // Keep for backward compat or redirect to manager
                 com.mobilellama.ui.screens.ModelManagerScreen(
-                    onBack = {
+                    onBack = { 
                         if (navController.previousBackStackEntry != null) navController.popBackStack()
-                        else navController.navigate("chatList")
+                        else navController.navigate("chat") 
                     }
                 )
             }
-
+            
             composable("manager") {
                 com.mobilellama.ui.screens.ModelManagerScreen(
-                    onBack = {
-                        if (navController.previousBackStackEntry != null) navController.popBackStack()
-                        else navController.navigate("chatList")
+                    onBack = { 
+                        if (navController.previousBackStackEntry != null) navController.popBackStack() 
+                        else navController.navigate("chat")
                     }
                 )
             }
-
-            // Chat List — new entry point for conversations
-            composable("chatList") {
-                ChatListScreen(
-                    onOpenDrawer = {
-                        scope.launch { drawerState.open() }
-                    },
-                    onChatSelected = { chatId ->
-                        navController.navigate("chat/$chatId")
-                    }
-                )
-            }
-
-            // Chat Screen — per-conversation
-            composable(
-                route = "chat/{chatId}",
-                arguments = listOf(navArgument("chatId") { type = NavType.StringType })
-            ) {
+    
+            composable("chat") {
                 ChatScreen(
                     onOpenDrawer = {
                         scope.launch { drawerState.open() }
-                    },
-                    onBack = {
-                        navController.popBackStack()
                     }
                 )
             }

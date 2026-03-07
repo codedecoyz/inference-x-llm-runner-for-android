@@ -1,20 +1,15 @@
 package com.mobilellama.viewmodel
 
 import android.util.Log
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.mobilellama.data.database.ChatDao
 import com.mobilellama.data.database.MessageDao
-import com.mobilellama.data.model.Chat
 import com.mobilellama.data.model.InferenceState
 import com.mobilellama.data.model.Message
 import com.mobilellama.data.repository.InferenceRepository
-import com.mobilellama.data.repository.MemoryManager
 import com.mobilellama.data.repository.ModelRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,15 +19,10 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ChatViewModel @Inject constructor(
-    savedStateHandle: SavedStateHandle,
     private val messageDao: MessageDao,
-    private val chatDao: ChatDao,
     private val inferenceRepository: InferenceRepository,
-    private val modelRepository: ModelRepository,
-    private val memoryManager: MemoryManager
+    private val modelRepository: ModelRepository
 ) : ViewModel() {
-
-    private val chatId: String = savedStateHandle["chatId"] ?: ""
 
     private val _messages = MutableStateFlow<List<Message>>(emptyList())
     val messages: StateFlow<List<Message>> = _messages.asStateFlow()
@@ -46,44 +36,24 @@ class ChatViewModel @Inject constructor(
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
-    private val _currentChat = MutableStateFlow<Chat?>(null)
-    val currentChat: StateFlow<Chat?> = _currentChat.asStateFlow()
-
-    private val _isLoadingOlder = MutableStateFlow(false)
-    val isLoadingOlder: StateFlow<Boolean> = _isLoadingOlder.asStateFlow()
-
     val inferenceState: StateFlow<InferenceState> = inferenceRepository.inferenceState
-
-    private var generationJob: Job? = null
-    private var paginationOffset = 0
-    private val pageSize = 30
 
     companion object {
         private const val TAG = "ChatViewModel"
     }
 
     init {
-        loadChat()
-        loadInitialMessages()
+        loadMessages()
+        // Initialize logic moved to observeModelChanges
         observeModelChanges()
     }
 
-    private fun loadChat() {
-        viewModelScope.launch(Dispatchers.IO) {
-            val chat = chatDao.getChatById(chatId)
-            _currentChat.value = chat
-            Log.i(TAG, "Loaded chat: ${chat?.id}, title='${chat?.title}'")
-        }
-    }
-
-    private fun loadInitialMessages() {
+    private fun loadMessages() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val initialMessages = messageDao.getMessagesPaged(chatId, pageSize, 0)
-                    .reversed() // DB returns newest-first, UI needs oldest-first
-                paginationOffset = initialMessages.size
-                _messages.value = initialMessages
-                Log.i(TAG, "Loaded ${initialMessages.size} initial messages")
+                val loadedMessages = messageDao.getAllMessages()
+                _messages.value = loadedMessages
+                Log.i(TAG, "Loaded ${loadedMessages.size} messages")
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to load messages", e)
             }
@@ -94,7 +64,10 @@ class ChatViewModel @Inject constructor(
         viewModelScope.launch {
             modelRepository.selectedModel.collect { model ->
                 Log.i(TAG, "Selected model changed to: ${model.name}")
+                // Stop any current generation
                 stopGeneration()
+                
+                // Reload engine
                 reloadModel()
             }
         }
@@ -103,13 +76,15 @@ class ChatViewModel @Inject constructor(
     private suspend fun reloadModel() {
         val modelPath = modelRepository.getModelPath()
         val file = java.io.File(modelPath)
-
+        
         if (file.exists()) {
-            Log.i(TAG, "Reloading model from: $modelPath")
-            inferenceRepository.release()
-            inferenceRepository.initializeModel(modelPath)
+             Log.i(TAG, "Reloading model from: $modelPath")
+             inferenceRepository.release()
+             inferenceRepository.initializeModel(modelPath)
         } else {
-            Log.w(TAG, "Selected model file not found: $modelPath")
+             Log.w(TAG, "Selected model file not found: $modelPath")
+             // Maybe show error or navigate? 
+             // Sidebar navigation handles download check usually.
         }
     }
 
@@ -120,34 +95,22 @@ class ChatViewModel @Inject constructor(
             return
         }
 
-        // Prevent simultaneous generations
-        if (_isGenerating.value) {
-            Log.w(TAG, "Already generating, ignoring send")
-            return
-        }
-
-        generationJob = viewModelScope.launch {
+        viewModelScope.launch {
             try {
-                val now = System.currentTimeMillis()
-
                 // Create and save user message
                 val message = Message(
-                    chatId = chatId,
                     role = "user",
                     content = trimmed,
-                    timestamp = now,
-                    tokenCount = trimmed.length / 4
+                    timestamp = System.currentTimeMillis()
                 )
 
-                val insertedId = withContext(Dispatchers.IO) {
-                    val id = messageDao.insertMessage(message)
-                    chatDao.updateLastMessageAt(chatId, now)
-                    id
+                // Save to database
+                withContext(Dispatchers.IO) {
+                    messageDao.insertMessage(message)
                 }
 
-                // Update UI with real DB id
-                _messages.value = _messages.value + message.copy(id = insertedId)
-                paginationOffset++
+                // Update UI optimistically
+                _messages.value = _messages.value + message
 
                 // Generate assistant response
                 generateAssistantResponse(trimmed)
@@ -163,47 +126,32 @@ class ChatViewModel @Inject constructor(
         _currentAssistantMessage.value = ""
 
         try {
-            // Build context with memory management
-            val chat = chatDao.getChatById(chatId) ?: return
-            val contextMessages = memoryManager.buildContextForInference(chat)
+            // Build full prompt based on model type
+            val fullPrompt = getPromptStr()
 
-            // Build prompt using existing format logic
-            val fullPrompt = getPromptStr(contextMessages)
-
-            Log.d(TAG, "Sending prompt to engine (${fullPrompt.length} chars)")
+            Log.d(TAG, "Sending prompt to engine:\n$fullPrompt")
 
             val result = inferenceRepository.generateResponse(fullPrompt) { token ->
+                // Dispatch updates to Main thread via viewModelScope
                 viewModelScope.launch(Dispatchers.Main) {
                     _currentAssistantMessage.value += token
                 }
             }
 
             if (result.isSuccess) {
-                val now = System.currentTimeMillis()
-                val responseText = _currentAssistantMessage.value
-
+                // Save complete assistant message
                 val assistantMessage = Message(
-                    chatId = chatId,
                     role = "assistant",
-                    content = responseText,
-                    timestamp = now,
-                    tokenCount = responseText.length / 4
+                    content = _currentAssistantMessage.value,
+                    timestamp = System.currentTimeMillis()
                 )
 
-                val insertedId = withContext(Dispatchers.IO) {
-                    val id = messageDao.insertMessage(assistantMessage)
-                    chatDao.updateLastMessageAt(chatId, now)
-                    id
+                withContext(Dispatchers.IO) {
+                    messageDao.insertMessage(assistantMessage)
                 }
 
-                _messages.value = _messages.value + assistantMessage.copy(id = insertedId)
-                paginationOffset++
+                _messages.value = _messages.value + assistantMessage
                 _currentAssistantMessage.value = ""
-
-                // Auto-generate title if empty
-                if (chat.title.isBlank()) {
-                    generateTitle(userMessage)
-                }
             } else {
                 val error = result.exceptionOrNull()
                 _errorMessage.value = error?.message ?: "Generation failed"
@@ -217,60 +165,6 @@ class ChatViewModel @Inject constructor(
         }
     }
 
-    private suspend fun generateTitle(firstMessage: String) {
-        withContext(Dispatchers.IO) {
-            try {
-                val titlePrompt = buildString {
-                    append("<|im_start|>system\n")
-                    append("You are a title generator. Reply with ONLY a 4-word max title, no punctuation, no quotes.<|im_end|>\n")
-                    append("<|im_start|>user\n")
-                    append("Write a 4-word max title for a conversation starting with: \"$firstMessage\"<|im_end|>\n")
-                    append("<|im_start|>assistant\n")
-                }
-
-                val titleBuilder = StringBuilder()
-                val result = inferenceRepository.generateResponse(titlePrompt) { token ->
-                    titleBuilder.append(token)
-                }
-
-                if (result.isSuccess) {
-                    val title = titleBuilder.toString().trim().take(50) // cap length
-                    if (title.isNotBlank()) {
-                        val chat = chatDao.getChatById(chatId)
-                        chat?.let {
-                            chatDao.upsert(it.copy(title = title))
-                            _currentChat.value = it.copy(title = title)
-                        }
-                        Log.i(TAG, "Auto-generated title: $title")
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to generate title", e)
-            }
-        }
-    }
-
-    fun loadOlderMessages() {
-        if (_isLoadingOlder.value) return
-
-        viewModelScope.launch(Dispatchers.IO) {
-            _isLoadingOlder.value = true
-            try {
-                val olderMessages = messageDao.getMessagesPaged(chatId, pageSize, paginationOffset)
-                    .reversed()
-                if (olderMessages.isNotEmpty()) {
-                    paginationOffset += olderMessages.size
-                    _messages.value = olderMessages + _messages.value
-                    Log.i(TAG, "Loaded ${olderMessages.size} older messages (offset=$paginationOffset)")
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to load older messages", e)
-            } finally {
-                _isLoadingOlder.value = false
-            }
-        }
-    }
-
     fun stopGeneration() {
         inferenceRepository.stopGeneration()
         _isGenerating.value = false
@@ -279,63 +173,66 @@ class ChatViewModel @Inject constructor(
         viewModelScope.launch {
             val partial = _currentAssistantMessage.value
             if (partial.isNotEmpty()) {
-                val now = System.currentTimeMillis()
                 val assistantMessage = Message(
-                    chatId = chatId,
                     role = "assistant",
                     content = "$partial [Interrupted]",
-                    timestamp = now,
-                    tokenCount = partial.length / 4
+                    timestamp = System.currentTimeMillis()
                 )
 
-                val insertedId = withContext(Dispatchers.IO) {
-                    val id = messageDao.insertMessage(assistantMessage)
-                    chatDao.updateLastMessageAt(chatId, now)
-                    id
+                withContext(Dispatchers.IO) {
+                    messageDao.insertMessage(assistantMessage)
                 }
 
-                _messages.value = _messages.value + assistantMessage.copy(id = insertedId)
-                paginationOffset++
+                _messages.value = _messages.value + assistantMessage
                 _currentAssistantMessage.value = ""
             }
         }
     }
 
-    fun cancelGeneration() {
-        generationJob?.cancel()
-        stopGeneration()
+    fun clearMessages() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                messageDao.deleteAllMessages()
+                _messages.value = emptyList()
+                Log.i(TAG, "Messages cleared")
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to clear messages", e)
+                _errorMessage.value = "Failed to clear messages: ${e.message}"
+            }
+        }
     }
 
     fun dismissError() {
         _errorMessage.value = null
     }
 
-    private fun getPromptStr(contextMessages: List<Message>): String {
+    private fun getPromptStr(): String {
         val model = modelRepository.selectedModel.value
+        val history = _messages.value
         val sb = StringBuilder()
-
-        val SYSTEM_PROMPT = "You are a helpful, concise AI assistant running offline on an Android device. Answer briefly."
+        
+        val SYSTEM_PROMPT = "You are a helpful, concise AI assistant running offline on an Android device. Answer briefly. If asked 'Who made you?', reply 'I was built by [Your Name] for the Mobile AI presentation.' If asked 'What is this?', reply 'This is a fully offline LLM running entirely on-device using the CPU.'"
 
         when (model.promptType) {
             com.mobilellama.data.model.PromptType.CHATML, com.mobilellama.data.model.PromptType.TINYLLAMA -> {
                 sb.append("<|im_start|>system\n$SYSTEM_PROMPT<|im_end|>\n")
-                contextMessages.forEach { msg ->
+                history.forEach { msg ->
                     sb.append("<|im_start|>${msg.role}\n${msg.content}<|im_end|>\n")
                 }
                 sb.append("<|im_start|>assistant\n")
             }
-
+            
             com.mobilellama.data.model.PromptType.PHI3 -> {
                 sb.append("<|system|>\n$SYSTEM_PROMPT<|end|>\n")
-                contextMessages.forEach { msg ->
+                history.forEach { msg ->
                     sb.append("<|${msg.role}|>\n${msg.content}<|end|>\n")
                 }
                 sb.append("<|assistant|>\n")
             }
-
+            
             com.mobilellama.data.model.PromptType.MISTRAL -> {
                 sb.append("<s>[INST] System: $SYSTEM_PROMPT\n\n")
-                contextMessages.forEach { msg ->
+                history.forEach { msg ->
                     if (msg.role == "user") {
                         sb.append("${msg.content} [/INST]")
                     } else {

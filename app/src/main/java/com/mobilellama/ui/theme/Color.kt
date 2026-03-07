@@ -23,8 +23,3 @@ val OnSurfaceDark = HighlightWhitePurple
 val OnSurfaceVariant = LightLavender
 val OutlineColor = SubtleDivider
 
-// Terminal / Neural Boot Aliases
-val TerminalAccent = LightLavender        // Terminal text color (#c77dff)
-val GlowAccent = HighlightWhitePurple     // Glow highlights (#e0aaff)
-val TerminalDim = Color(0xFF9d4edd)       // Dimmed terminal text for binary rain
-val BinaryRainColor = LightLavender       // Binary rain column color

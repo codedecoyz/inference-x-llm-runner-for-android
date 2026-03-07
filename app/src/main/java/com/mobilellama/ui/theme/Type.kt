@@ -7,8 +7,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.mobilellama.ui.theme.HighlightWhitePurple
 
-val TerminalFontFamily = FontFamily.Monospace
-
 val Typography = Typography(
     bodyLarge = TextStyle(
         fontFamily = FontFamily.SansSerif,
@@ -20,7 +18,7 @@ val Typography = Typography(
     ),
     titleLarge = TextStyle(
         fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Medium,
+        fontWeight = FontWeight.Medium, // Slightly bolder for titles
         fontSize = 22.sp,
         lineHeight = 28.sp,
         letterSpacing = 0.5.sp,
@@ -32,15 +30,6 @@ val Typography = Typography(
         fontSize = 11.sp,
         lineHeight = 16.sp,
         letterSpacing = 0.5.sp,
-        color = HighlightWhitePurple
-    ),
-    // Display style for status bar text (small, letter-spaced, uppercase)
-    displaySmall = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Medium,
-        fontSize = 12.sp,
-        lineHeight = 16.sp,
-        letterSpacing = 3.sp,
         color = HighlightWhitePurple
     )
 )

@@ -84,8 +84,8 @@ Java_com_mobilellama_native_LlamaEngine_nativeInit(
 
     // Load model
     llama_model_params model_params = llama_model_default_params();
-    model_params.n_gpu_layers = 99; // ⚡ Offload all possible layers to the GPU (Vulkan)
-    
+    // Enable GPU offloading - using 99 to offload all available layers to OpenCL
+    model_params.n_gpu_layers = 99;
     // New API: llama_model_load_from_file
     llama_model* model = llama_model_load_from_file(path, model_params);
 

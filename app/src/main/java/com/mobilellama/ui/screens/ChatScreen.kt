@@ -28,13 +28,12 @@ import com.mobilellama.ui.theme.*
 import com.mobilellama.viewmodel.ChatViewModel
 import kotlinx.coroutines.launch
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Menu
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
     onOpenDrawer: () -> Unit,
-    onBack: () -> Unit = {},
     viewModel: ChatViewModel = hiltViewModel()
 ) {
     val messages by viewModel.messages.collectAsState()
@@ -42,8 +41,6 @@ fun ChatScreen(
     val isGenerating by viewModel.isGenerating.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
     val inferenceState by viewModel.inferenceState.collectAsState()
-    val currentChat by viewModel.currentChat.collectAsState()
-    val isLoadingOlder by viewModel.isLoadingOlder.collectAsState()
 
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
@@ -52,19 +49,12 @@ fun ChatScreen(
     LaunchedEffect(messages.size, currentAssistantMessage) {
         if (messages.isNotEmpty() || currentAssistantMessage.isNotEmpty()) {
             coroutineScope.launch {
+                // Scroll to the very bottom, accounting for the streaming message
                 val totalItems = messages.size + if (currentAssistantMessage.isNotEmpty()) 1 else 0
                 if (totalItems > 0) {
                     listState.animateScrollToItem(totalItems - 1)
                 }
             }
-        }
-    }
-
-    // Pagination: load older messages when scrolling to top
-    val firstVisibleItemIndex by remember { derivedStateOf { listState.firstVisibleItemIndex } }
-    LaunchedEffect(firstVisibleItemIndex) {
-        if (firstVisibleItemIndex == 0 && messages.isNotEmpty() && !isLoadingOlder) {
-            viewModel.loadOlderMessages()
         }
     }
 
@@ -76,8 +66,6 @@ fun ChatScreen(
             viewModel.dismissError()
         }
     }
-
-    val chatTitle = currentChat?.title?.ifBlank { "New Chat" } ?: "Chat"
 
     // Root Container with Gradient
     Box(
@@ -94,10 +82,10 @@ fun ChatScreen(
             topBar = {
                 CenterAlignedTopAppBar(
                     navigationIcon = {
-                        IconButton(onClick = onBack) {
+                        IconButton(onClick = onOpenDrawer) {
                             Icon(
-                                imageVector = Icons.Default.ArrowBack,
-                                contentDescription = "Back",
+                                imageVector = Icons.Default.Menu,
+                                contentDescription = "Menu",
                                 tint = HighlightWhitePurple
                             )
                         }
@@ -105,12 +93,11 @@ fun ChatScreen(
                     title = {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
-                                text = chatTitle,
+                                text = "InferenceX",
                                 style = MaterialTheme.typography.titleMedium.copy(fontSize = 20.sp),
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 1.sp,
-                                color = HighlightWhitePurple,
-                                maxLines = 1
+                                color = HighlightWhitePurple
                             )
                             if (isGenerating || inferenceState !is InferenceState.Ready) {
                                 Text(
@@ -130,7 +117,7 @@ fun ChatScreen(
                 InputBar(
                     isGenerating = isGenerating,
                     onSendMessage = { viewModel.sendMessage(it) },
-                    onStopGeneration = { viewModel.cancelGeneration() }
+                    onStopGeneration = { viewModel.stopGeneration() }
                 )
             },
             snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -161,24 +148,6 @@ fun ChatScreen(
                         .padding(paddingValues),
                     contentPadding = PaddingValues(top = 16.dp, bottom = 16.dp)
                 ) {
-                    // Loading indicator for older messages
-                    if (isLoadingOlder) {
-                        item {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(8.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                CircularProgressIndicator(
-                                    color = LightLavender,
-                                    modifier = Modifier.size(24.dp),
-                                    strokeWidth = 2.dp
-                                )
-                            }
-                        }
-                    }
-
                     // Empty State / Welcome
                     if (messages.isEmpty() && currentAssistantMessage.isEmpty()) {
                         item {
@@ -209,10 +178,7 @@ fun ChatScreen(
                     }
 
                     // Messages
-                    items(
-                        items = messages,
-                        key = { it.id }
-                    ) { message ->
+                    items(messages) { message ->
                         AnimatedVisibility(
                             visible = true,
                             enter = fadeIn() + slideInVertically { it / 2 }

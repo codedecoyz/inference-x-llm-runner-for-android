@@ -1,8 +1,7 @@
 cmake_minimum_required(VERSION 3.18.1)
 project(llama_jni)
 
-# Include directories for llama.cpp headers
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/include)
+# (Old prebuilt jniLibs block removed to avoid header conflicts)
 
 # Add JNI bridge source
 add_library(llama_jni SHARED
@@ -10,35 +9,30 @@ add_library(llama_jni SHARED
     llama_jni.h
 )
 
-# Link prebuilt libllama.so
-add_library(llama SHARED IMPORTED)
-set_target_properties(llama PROPERTIES IMPORTED_LOCATION
-    ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/${ANDROID_ABI}/libllama.so)
+# Set up llama.cpp build options
+set(LLAMA_STATIC ON CACHE BOOL "Build static libraries" FORCE)
+set(GGML_OPENCL ON CACHE BOOL "Enable OpenCL backend" FORCE)
+set(LLAMA_OPENCL ON CACHE BOOL "Enable OpenCL backend" FORCE)
 
-# Link prebuilt libomp.so
-add_library(omp SHARED IMPORTED)
-set_target_properties(omp PROPERTIES IMPORTED_LOCATION
-    ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/${ANDROID_ABI}/libomp.so)
+# Setup OpenCL headers before adding llama.cpp
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/opencl-headers)
+set(OpenCL_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/opencl-headers)
 
-# Link prebuilt libggml-base.so
-add_library(ggml-base SHARED IMPORTED)
-set_target_properties(ggml-base PROPERTIES IMPORTED_LOCATION
-    ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/${ANDROID_ABI}/libggml-base.so)
+# Android OpenCL Library
+# On Android, libOpenCL.so is provided by the device vendor at runtime.
+# GGML uses `find_package(OpenCL)` which fails on Android because the NDK doesn't have it.
+# We bypass the check by setting OpenCL_FOUND and OpenCL_LIBRARY manually.
+set(OpenCL_FOUND TRUE CACHE BOOL "Force OpenCL Found" FORCE)
+# Build our mock OpenCL library to satisfy the linker at compile time.
+# At runtime, Android's dynamic linker will prioritize the system's libOpenCL.so.
+add_library(OpenCL SHARED opencl_stub.cpp)
+target_include_directories(OpenCL PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/opencl-headers)
+set(OpenCL_LIBRARY OpenCL CACHE STRING "Mock OpenCL Library" FORCE)
+set(OpenCL_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/opencl-headers CACHE PATH "OpenCL Headers" FORCE)
 
-# Link prebuilt libggml-cpu.so
-add_library(ggml-cpu SHARED IMPORTED)
-set_target_properties(ggml-cpu PROPERTIES IMPORTED_LOCATION
-    ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/${ANDROID_ABI}/libggml-cpu.so)
-
-# Link prebuilt libggml-vulkan.so
-add_library(ggml-vulkan SHARED IMPORTED)
-set_target_properties(ggml-vulkan PROPERTIES IMPORTED_LOCATION
-    ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/${ANDROID_ABI}/libggml-vulkan.so)
-
-# Link prebuilt libggml.so (dependency of llama)
-add_library(ggml SHARED IMPORTED)
-set_target_properties(ggml PROPERTIES IMPORTED_LOCATION
-    ${CMAKE_CURRENT_SOURCE_DIR}/../jniLibs/${ANDROID_ABI}/libggml.so)
+# Build llama.cpp from embedded source
+add_subdirectory(llama.cpp_src)
 
 # Link JNI bridge with llama.cpp
-target_link_libraries(llama_jni llama ggml ggml-vulkan log)
+# The CMake target provided by llama.cpp repo is "llama"
+target_link_libraries(llama_jni llama log)

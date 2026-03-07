@@ -15,7 +15,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -25,9 +24,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mobilellama.ui.components.InferenceXActionButton
-import com.mobilellama.ui.components.ScrollingBinaryBackground
+
 import com.mobilellama.ui.theme.HighlightWhitePurple
 import com.mobilellama.ui.theme.VibrantPurple
+import androidx.compose.ui.draw.clip
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -37,53 +37,40 @@ fun OnboardingScreen(
     val pagerState = rememberPagerState(pageCount = { 3 })
     val coroutineScope = rememberCoroutineScope()
 
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        // Layer 1: Scrolling binary rain background
-        ScrollingBinaryBackground(
-            modifier = Modifier.fillMaxSize(),
-            alpha = 0.04f,
-            cycleDurationMs = 18000,
-            columnCount = 12
-        )
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+        ) { page ->
+            OnboardingPageContent(
+                page = page,
+                onOnboardingComplete = onOnboardingComplete
+            )
+        }
 
-        // Layer 2: Pager content
-        Column(
-            modifier = Modifier.fillMaxSize()
+        // Pager Indicators
+        Row(
+            Modifier
+                .height(50.dp)
+                .fillMaxWidth()
+                .padding(bottom = 20.dp),
+            horizontalArrangement = Arrangement.Center
         ) {
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-            ) { page ->
-                OnboardingPageContent(
-                    page = page,
-                    onOnboardingComplete = onOnboardingComplete
+            repeat(3) { iteration ->
+                val color = if (pagerState.currentPage == iteration) VibrantPurple else Color.Gray.copy(alpha = 0.5f)
+                Box(
+                    modifier = Modifier
+                        .padding(4.dp)
+                        .clip(CircleShape)
+                        .background(color)
+                        .size(if (pagerState.currentPage == iteration) 12.dp else 8.dp)
                 )
-            }
-
-            // Pager Indicators
-            Row(
-                Modifier
-                    .height(50.dp)
-                    .fillMaxWidth()
-                    .padding(bottom = 20.dp),
-                horizontalArrangement = Arrangement.Center
-            ) {
-                repeat(3) { iteration ->
-                    val color = if (pagerState.currentPage == iteration) VibrantPurple else Color.Gray.copy(alpha = 0.5f)
-                    Box(
-                        modifier = Modifier
-                            .padding(4.dp)
-                            .clip(CircleShape)
-                            .background(color)
-                            .size(if (pagerState.currentPage == iteration) 12.dp else 8.dp)
-                    )
-                }
             }
         }
     }
@@ -191,3 +178,5 @@ fun OnboardingPageContent(
         }
     }
 }
+
+

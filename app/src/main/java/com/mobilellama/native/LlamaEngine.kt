@@ -20,7 +20,6 @@ class LlamaEngine {
                 System.loadLibrary("ggml-base")
                 Log.i(TAG, "Attempting to load libggml-cpu (v3)...")
                 System.loadLibrary("ggml-cpu")
-                System.loadLibrary("ggml-vulkan") // ⚡ Vulkan Hardware Acceleration
                 Log.i(TAG, "Attempting to load libggml (v3)...")
                 System.loadLibrary("ggml")
                 Log.i(TAG, "Loaded libggml. Attempting to load libllama (v3)...")
@@ -55,13 +54,13 @@ class LlamaEngine {
             Log.i(TAG, "Initializing model from: $modelPath")
 
             val contextSize = 2048
-            // For typical ARM big.LITTLE architectures, using all cores (or cores-2) 
-            // is a known anti-pattern for llama.cpp because the slow LITTLE cores 
-            // bottleneck synchronization. Capping at 4 targets the performance cores.
+            // Use optimal thread count: 
+            // User requested ~50% usage or better. 
+            // Leaving 2 cores for UI/System is usually safe.
             val availableProcessors = Runtime.getRuntime().availableProcessors()
-            val numThreads = if (availableProcessors >= 8) 4 else availableProcessors.coerceAtLeast(1).coerceAtMost(4)
+            val numThreads = (availableProcessors - 2).coerceAtLeast(1).coerceAtMost(8)
 
-            Log.i(TAG, "Initializing with threads: $numThreads (available: $availableProcessors) - optimized for big cores")
+            Log.i(TAG, "Initializing with threads: $numThreads (available: $availableProcessors)")
 
             handle = nativeInit(modelPath, contextSize, numThreads)
 
