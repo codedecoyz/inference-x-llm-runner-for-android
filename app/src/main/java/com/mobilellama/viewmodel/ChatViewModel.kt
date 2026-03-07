@@ -1,5 +1,6 @@
 package com.mobilellama.viewmodel
 
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -12,7 +13,10 @@ import com.mobilellama.data.model.Message
 import com.mobilellama.data.repository.InferenceRepository
 import com.mobilellama.data.repository.MemoryManager
 import com.mobilellama.data.repository.ModelRepository
+import com.mobilellama.ai.AIBridge
+import com.mobilellama.ai.IntentRouter
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,6 +28,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ChatViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     savedStateHandle: SavedStateHandle,
     private val messageDao: MessageDao,
     private val chatDao: ChatDao,
@@ -108,6 +113,19 @@ class ChatViewModel @Inject constructor(
             Log.i(TAG, "Reloading model from: $modelPath")
             inferenceRepository.release()
             inferenceRepository.initializeModel(modelPath)
+            
+            // Try to initialize HRM if available
+            val hrmFile = java.io.File(context.filesDir, "hrm/hrm.onnx")
+            if (hrmFile.exists() && AIBridge.loaded) {
+                val hrmOk = AIBridge.initHRM(
+                    modelPath = hrmFile.absolutePath,
+                    inputDim = 64, hDim = 256, lDim = 128, outputDim = 64,
+                    maxOuter = 20, maxInner = 10, haltThresh = 0.9f
+                )
+                Log.i(TAG, "HRM Engine initialization: \${if (hrmOk) \"SUCCESS\" else \"FAILED\"}")
+            } else {
+                Log.i(TAG, "No hrm.onnx found at \${hrmFile.absolutePath} or AIBridge not loaded.")
+            }
         } else {
             Log.w(TAG, "Selected model file not found: $modelPath")
         }
@@ -163,11 +181,62 @@ class ChatViewModel @Inject constructor(
         _currentAssistantMessage.value = ""
 
         try {
-            // Build context with memory management
+            val now = System.currentTimeMillis()
             val chat = chatDao.getChatById(chatId) ?: return
-            val contextMessages = memoryManager.buildContextForInference(chat)
 
-            // Build prompt using existing format logic
+            // --- Intent Routing: Check if this is a reasoning task for HRM ---
+            if (IntentRouter.shouldUseHRM(userMessage)) {
+                Log.i(TAG, "Routing query to HRM Engine: \"$userMessage\"")
+                
+                // Encode input (simple character encoding placeholder)
+                val encoded = FloatArray(64) { 0f }
+                userMessage.forEachIndexed { i, c ->
+                    if (i < 64) encoded[i] = c.code / 128.0f
+                }
+                
+                // Run inference instantly on NPU
+                val result = AIBridge.inferHRM(encoded)
+                val diag = AIBridge.getHRMDiagnostics(encoded)
+                
+                if (result != null && result.isNotEmpty()) {
+                    val maxVal = result.maxOrNull() ?: 0f
+                    var maxIdx = 0
+                    for (i in result.indices) {
+                        if (result[i] == maxVal) {
+                            maxIdx = i
+                            break
+                        }
+                    }
+                    
+                    val diagText = diag?.let {
+                        "\n\n[HRM Engine: \${it[0]} outer steps, \${it[1]} inner steps, confidence \${it[2] / 10.0f}%]"
+                    } ?: ""
+                    
+                    val responseText = "HRM Analysis:\nClass $maxIdx identified with ${"%.2f".format(maxVal)} confidence.$diagText"
+                    
+                    val assistantMessage = Message(
+                        chatId = chatId, role = "assistant", content = responseText, 
+                        timestamp = now, tokenCount = responseText.length / 4
+                    )
+                    
+                    val insertedId = withContext(Dispatchers.IO) {
+                        val id = messageDao.insertMessage(assistantMessage)
+                        chatDao.updateLastMessageAt(chatId, now)
+                        id
+                    }
+                    
+                    _messages.value = _messages.value + assistantMessage.copy(id = insertedId)
+                    paginationOffset++
+                    
+                    if (chat.title.isBlank()) generateTitle(userMessage)
+                    return
+                } else {
+                    Log.w(TAG, "HRM Engine failed to produce output. Falling back to llama.cpp.")
+                }
+            }
+
+            // --- Language Task (or HRM Fallback): Use existing llama.cpp ---
+            val contextMessages = memoryManager.buildContextForInference(chat)
             val fullPrompt = getPromptStr(contextMessages)
 
             Log.d(TAG, "Sending prompt to engine (${fullPrompt.length} chars)")
@@ -179,20 +248,16 @@ class ChatViewModel @Inject constructor(
             }
 
             if (result.isSuccess) {
-                val now = System.currentTimeMillis()
                 val responseText = _currentAssistantMessage.value
 
                 val assistantMessage = Message(
-                    chatId = chatId,
-                    role = "assistant",
-                    content = responseText,
-                    timestamp = now,
-                    tokenCount = responseText.length / 4
+                    chatId = chatId, role = "assistant", content = responseText,
+                    timestamp = System.currentTimeMillis(), tokenCount = responseText.length / 4
                 )
 
                 val insertedId = withContext(Dispatchers.IO) {
                     val id = messageDao.insertMessage(assistantMessage)
-                    chatDao.updateLastMessageAt(chatId, now)
+                    chatDao.updateLastMessageAt(chatId, System.currentTimeMillis())
                     id
                 }
 
@@ -200,7 +265,6 @@ class ChatViewModel @Inject constructor(
                 paginationOffset++
                 _currentAssistantMessage.value = ""
 
-                // Auto-generate title if empty
                 if (chat.title.isBlank()) {
                     generateTitle(userMessage)
                 }

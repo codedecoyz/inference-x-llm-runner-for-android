@@ -84,7 +84,7 @@ Java_com_mobilellama_native_LlamaEngine_nativeInit(
 
     // Load model
     llama_model_params model_params = llama_model_default_params();
-    model_params.n_gpu_layers = 0; // Fallback to CPU. Vulkan compute shaders are corrupting on this device.
+    model_params.n_gpu_layers = 99; // ⚡ Offload all possible layers to the GPU (Vulkan)
     
     // New API: llama_model_load_from_file
     llama_model* model = llama_model_load_from_file(path, model_params);
@@ -101,9 +101,6 @@ Java_com_mobilellama_native_LlamaEngine_nativeInit(
     // Create context
     llama_context_params ctx_params = llama_context_default_params();
     ctx_params.n_ctx = contextSize;
-    ctx_params.flash_attn_type = LLAMA_FLASH_ATTN_TYPE_DISABLED; // 🩹 Force disable FA specifically for Adreno Vulkan stability
-    ctx_params.n_batch = 32;  // 🩹 Workaround for Adreno Vulkan driver corruption bugs
-    ctx_params.n_ubatch = 32; // 🩹 Forces GPU matrix chunks to be small enough to avoid memory faults
     ctx_params.n_threads = numThreads;
     ctx_params.n_threads_batch = numThreads;
 
@@ -184,13 +181,14 @@ Java_com_mobilellama_native_LlamaEngine_nativeGenerate(
     llama_sampler_chain_add(smpl, llama_sampler_init_dist(LLAMA_DEFAULT_SEED));
 
     // Evaluate prompt tokens in batches
-    int ctx_batch_size = llama_n_batch(instance->context);
-    llama_batch batch = llama_batch_init(ctx_batch_size, 0, 1);
+    llama_batch batch = llama_batch_init(512, 0, 1);
 
-    for (size_t i = 0; i < tokens_prompt.size(); i += ctx_batch_size) {
+    for (size_t i = 0; i < tokens_prompt.size(); i += batch.n_tokens) {
         common_batch_clear(batch);
 
-        size_t batch_size = std::min(size_t(ctx_batch_size), tokens_prompt.size() - i);
+        size_t batch_size = std::min(size_t(batch.n_tokens), tokens_prompt.size() - i); // batch.n_tokens is just capacity here really? No, we shouldn't use batch.n_tokens as capacity check 
+        // We should check vs 512.
+        batch_size = std::min(size_t(512), tokens_prompt.size() - i);
         
         for (size_t j = 0; j < batch_size; j++) {
             common_batch_add(batch, tokens_prompt[i + j], i + j, {0}, false);
@@ -328,9 +326,6 @@ Java_com_mobilellama_native_LlamaEngine_nativeClearCache(
         // Create new context with same parameters
         llama_context_params ctx_params = llama_context_default_params();
         ctx_params.n_ctx = instance->n_ctx;
-        ctx_params.flash_attn_type = LLAMA_FLASH_ATTN_TYPE_DISABLED; // 🩹 Force disable FA specifically for Adreno Vulkan stability
-        ctx_params.n_batch = 32;  // 🩹 Workaround for Adreno Vulkan driver corruption bugs
-        ctx_params.n_ubatch = 32; // 🩹 Forces GPU matrix chunks to be small enough to avoid memory faults
         ctx_params.n_threads = instance->n_threads;
         ctx_params.n_threads_batch = instance->n_threads;
 

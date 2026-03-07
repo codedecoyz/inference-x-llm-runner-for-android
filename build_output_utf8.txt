@@ -1,0 +1,82 @@
+﻿Reusing configuration cache.
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preArm64DebugBuild UP-TO-DATE
+> Task :app:mergeArm64DebugNativeDebugMetadata NO-SOURCE
+> Task :app:generateArm64DebugBuildConfig UP-TO-DATE
+> Task :app:createArm64DebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:javaPreCompileArm64Debug UP-TO-DATE
+> Task :app:mergeArm64DebugShaders UP-TO-DATE
+> Task :app:generateArm64DebugResValues UP-TO-DATE
+> Task :app:mergeArm64DebugStartupProfile UP-TO-DATE
+> Task :app:compileArm64DebugShaders NO-SOURCE
+> Task :app:desugarArm64DebugFileDependencies UP-TO-DATE
+> Task :app:generateArm64DebugAssets UP-TO-DATE
+> Task :app:generateArm64DebugResources UP-TO-DATE
+> Task :app:mergeArm64DebugJniLibFolders UP-TO-DATE
+> Task :app:extractDeepLinksArm64Debug UP-TO-DATE
+> Task :app:checkArm64DebugAarMetadata UP-TO-DATE
+> Task :app:validateSigningArm64Debug UP-TO-DATE
+> Task :app:writeArm64DebugAppMetadata UP-TO-DATE
+> Task :app:mergeArm64DebugResources UP-TO-DATE
+> Task :app:mapArm64DebugSourceSetPaths UP-TO-DATE
+> Task :app:preX86_64DebugBuild UP-TO-DATE
+> Task :app:packageArm64DebugResources UP-TO-DATE
+> Task :app:writeArm64DebugSigningConfigVersions UP-TO-DATE
+> Task :app:mergeX86_64DebugNativeDebugMetadata NO-SOURCE
+> Task :app:generateX86_64DebugBuildConfig UP-TO-DATE
+> Task :app:mergeArm64DebugAssets UP-TO-DATE
+> Task :app:generateX86_64DebugResValues UP-TO-DATE
+> Task :app:parseArm64DebugLocalResources UP-TO-DATE
+> Task :app:checkX86_64DebugAarMetadata UP-TO-DATE
+> Task :app:createX86_64DebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:mapX86_64DebugSourceSetPaths UP-TO-DATE
+> Task :app:compressArm64DebugAssets UP-TO-DATE
+> Task :app:generateX86_64DebugResources UP-TO-DATE
+> Task :app:checkArm64DebugDuplicateClasses UP-TO-DATE
+> Task :app:extractDeepLinksX86_64Debug UP-TO-DATE
+> Task :app:mergeLibDexArm64Debug UP-TO-DATE
+> Task :app:packageX86_64DebugResources UP-TO-DATE
+> Task :app:javaPreCompileX86_64Debug UP-TO-DATE
+> Task :app:mergeX86_64DebugShaders UP-TO-DATE
+> Task :app:parseX86_64DebugLocalResources UP-TO-DATE
+> Task :app:mergeX86_64DebugResources UP-TO-DATE
+> Task :app:compileX86_64DebugShaders NO-SOURCE
+> Task :app:mergeX86_64DebugStartupProfile UP-TO-DATE
+> Task :app:processArm64DebugMainManifest UP-TO-DATE
+> Task :app:generateX86_64DebugAssets UP-TO-DATE
+> Task :app:mergeX86_64DebugAssets UP-TO-DATE
+> Task :app:desugarX86_64DebugFileDependencies UP-TO-DATE
+> Task :app:processArm64DebugManifest UP-TO-DATE
+> Task :app:checkX86_64DebugDuplicateClasses UP-TO-DATE
+> Task :app:compressX86_64DebugAssets UP-TO-DATE
+> Task :app:mergeX86_64DebugJniLibFolders UP-TO-DATE
+> Task :app:processX86_64DebugMainManifest UP-TO-DATE
+> Task :app:mergeLibDexX86_64Debug UP-TO-DATE
+> Task :app:validateSigningX86_64Debug UP-TO-DATE
+> Task :app:processArm64DebugManifestForPackage UP-TO-DATE
+> Task :app:writeX86_64DebugSigningConfigVersions UP-TO-DATE
+> Task :app:writeX86_64DebugAppMetadata UP-TO-DATE
+> Task :app:processX86_64DebugManifest UP-TO-DATE
+> Task :app:processX86_64DebugManifestForPackage UP-TO-DATE
+> Task :app:mergeExtDexArm64Debug UP-TO-DATE
+> Task :app:mergeExtDexX86_64Debug UP-TO-DATE
+> Task :app:configureCMakeDebug[x86_64]
+> Task :app:processArm64DebugResources UP-TO-DATE
+> Task :app:configureCMakeDebug[arm64-v8a]
+
+> Task :app:buildCMakeDebug[x86_64] FAILED
+C/C++: ninja: error: 'C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/jniLibs/x86_64/libggml-vulkan.so', needed by 'C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/build/intermediates/cxx/Debug/314g5z2v/obj/x86_64/libllama_jni.so', missing and no known rule to make it
+
+> Task :app:kspArm64DebugKotlin UP-TO-DATE
+> Task :app:processX86_64DebugResources
+
+> Task :app:buildCMakeDebug[arm64-v8a] FAILED
+C/C++: ninja: Entering directory `C:\Users\Asus\Desktop\bored\mobile-llama-compyle-offline-ai-android-app\app\.cxx\Debug\314g5z2v\arm64-v8a'
+C/C++: C:\Users\Asus\AppData\Local\Android\Sdk\ndk\26.1.10909125\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android28 --sysroot=C:/Users/Asus/AppData/Local/Android/Sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/windows-x86_64/sysroot -Dllama_jni_EXPORTS -IC:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/../jniLibs/include -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info  -fPIC -MD -MT CMakeFiles/llama_jni.dir/llama_jni.cpp.o -MF CMakeFiles\llama_jni.dir\llama_jni.cpp.o.d -o CMakeFiles/llama_jni.dir/llama_jni.cpp.o -c C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/llama_jni.cpp
+C/C++: C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/src/main/cpp/llama_jni.cpp:10:10: fatal error: 'android/property_services.h' file not found
+C/C++: #include <android/property_services.h>
+C/C++:          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+C/C++: 1 error generated.
+59 actionable tasks: 5 executed, 54 up-to-date
+Configuration cache entry reused.

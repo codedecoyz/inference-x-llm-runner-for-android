@@ -1,0 +1,68 @@
+﻿Reusing configuration cache.
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preArm64DebugBuild UP-TO-DATE
+> Task :app:mergeArm64DebugNativeDebugMetadata NO-SOURCE
+> Task :app:generateArm64DebugResValues UP-TO-DATE
+> Task :app:createArm64DebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:javaPreCompileArm64Debug UP-TO-DATE
+> Task :app:extractDeepLinksArm64Debug UP-TO-DATE
+> Task :app:mergeArm64DebugShaders UP-TO-DATE
+> Task :app:desugarArm64DebugFileDependencies UP-TO-DATE
+> Task :app:generateArm64DebugBuildConfig UP-TO-DATE
+> Task :app:generateArm64DebugResources UP-TO-DATE
+> Task :app:compileArm64DebugShaders NO-SOURCE
+> Task :app:mergeArm64DebugStartupProfile UP-TO-DATE
+> Task :app:mapArm64DebugSourceSetPaths UP-TO-DATE
+> Task :app:generateArm64DebugAssets UP-TO-DATE
+> Task :app:mergeArm64DebugResources UP-TO-DATE
+> Task :app:mergeArm64DebugJniLibFolders UP-TO-DATE
+> Task :app:checkArm64DebugAarMetadata UP-TO-DATE
+> Task :app:packageArm64DebugResources UP-TO-DATE
+> Task :app:writeArm64DebugAppMetadata UP-TO-DATE
+> Task :app:writeArm64DebugSigningConfigVersions UP-TO-DATE
+> Task :app:validateSigningArm64Debug UP-TO-DATE
+> Task :app:parseArm64DebugLocalResources UP-TO-DATE
+> Task :app:mergeArm64DebugAssets UP-TO-DATE
+> Task :app:compressArm64DebugAssets UP-TO-DATE
+> Task :app:checkArm64DebugDuplicateClasses UP-TO-DATE
+> Task :app:mergeLibDexArm64Debug UP-TO-DATE
+> Task :app:processArm64DebugMainManifest UP-TO-DATE
+> Task :app:processArm64DebugManifest UP-TO-DATE
+> Task :app:processArm64DebugManifestForPackage UP-TO-DATE
+> Task :app:mergeExtDexArm64Debug UP-TO-DATE
+> Task :app:configureCMakeDebug[arm64-v8a]
+> Task :app:processArm64DebugResources UP-TO-DATE
+> Task :app:buildCMakeDebug[arm64-v8a]
+> Task :app:kspArm64DebugKotlin UP-TO-DATE
+
+> Task :app:compileArm64DebugKotlin FAILED
+.\gradlew : e: file:///C:/Users/Asus/Desktop/bored/mobile-llama-compyle-offline-ai-android-app/app/
+src/main/java/com/mobilellama/native/LlamaEngine.kt:283:36 Unresolved reference 'getProperty'.
+At line:1 char:1
++ .\gradlew assembleArm64Debug --console=plain 2>&1 | Out-File -Encodin ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (e: file:///C:/U... 'getProperty'.:String) [], RemoteE 
+   xception
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+> Task :app:mergeArm64DebugNativeLibs
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileArm64DebugKotlin'.
+> A failure occurred while executing 
+org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 2s
+32 actionable tasks: 4 executed, 28 up-to-date
+Configuration cache entry reused.
