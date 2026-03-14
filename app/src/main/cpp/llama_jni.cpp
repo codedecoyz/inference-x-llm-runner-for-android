@@ -7,6 +7,8 @@
 #include <algorithm>
 #include <cerrno>
 #include <cstring>
+#include "tools/mtmd/mtmd.h"
+#include "tools/mtmd/mtmd-helper.h"
 
 #define LOG_TAG "LlamaJNI"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
@@ -15,12 +17,13 @@
 struct LlamaInstance {
     llama_model* model;
     llama_context* context;
+    mtmd_context* mm_ctx;
     int n_ctx;
     int n_threads;
     std::atomic<bool> stop_requested;
 
-    LlamaInstance(llama_model* m, llama_context* c, int ctx_size, int threads)
-        : model(m), context(c), n_ctx(ctx_size), n_threads(threads), stop_requested(false) {}
+    LlamaInstance(llama_model* m, llama_context* c, mtmd_context* mm, int ctx_size, int threads)
+        : model(m), context(c), mm_ctx(mm), n_ctx(ctx_size), n_threads(threads), stop_requested(false) {}
 };
 
 // Helper to add a token to the batch
@@ -54,9 +57,10 @@ void llama_log_callback(ggml_log_level level, const char * text, void * user_dat
 
 JNIEXPORT jlong JNICALL
 Java_com_mobilellama_native_LlamaEngine_nativeInit(
-    JNIEnv* env, jobject thiz, jstring modelPath, jint contextSize, jint numThreads) {
+    JNIEnv* env, jobject thiz, jstring modelPath, jstring mmprojPath, jint contextSize, jint numThreads) {
 
     const char* path = env->GetStringUTFChars(modelPath, nullptr);
+    const char* mm_path = mmprojPath ? env->GetStringUTFChars(mmprojPath, nullptr) : nullptr;
     if (!path) {
         env->ThrowNew(env->FindClass("java/lang/RuntimeException"), "Failed to get model path");
         return 0;
@@ -114,7 +118,22 @@ Java_com_mobilellama_native_LlamaEngine_nativeInit(
         return 0;
     }
 
-    LlamaInstance* instance = new LlamaInstance(model, context, contextSize, numThreads);
+    // Initialize multimodal context if mmproj is provided
+    mtmd_context* mm_ctx = nullptr;
+    if (mm_path) {
+        mtmd_context_params mm_params = mtmd_context_params_default();
+        mm_params.n_threads = numThreads;
+        mm_ctx = mtmd_init_from_file(mm_path, model, mm_params);
+        env->ReleaseStringUTFChars(mmprojPath, mm_path);
+        
+        if (!mm_ctx) {
+            LOGE("Failed to create mtmd (multimodal) context from project path");
+        } else {
+            LOGI("Multimodal processing initialized successfully");
+        }
+    }
+
+    LlamaInstance* instance = new LlamaInstance(model, context, mm_ctx, contextSize, numThreads);
     LOGI("Model initialized successfully");
 
     return reinterpret_cast<jlong>(instance);
@@ -122,7 +141,9 @@ Java_com_mobilellama_native_LlamaEngine_nativeInit(
 
 JNIEXPORT jboolean JNICALL
 Java_com_mobilellama_native_LlamaEngine_nativeGenerate(
-    JNIEnv* env, jobject thiz, jlong handle, jstring prompt, jint maxTokens, jobject callback) {
+    JNIEnv* env, jobject thiz, jlong handle, jstring prompt, 
+    jbyteArray imagePixels, jint imageWidth, jint imageHeight, 
+    jint maxTokens, jobject callback) {
 
     LlamaInstance* instance = reinterpret_cast<LlamaInstance*>(handle);
     if (!instance || !instance->model || !instance->context) {
@@ -141,35 +162,6 @@ Java_com_mobilellama_native_LlamaEngine_nativeGenerate(
 
     LOGI("Starting generation with prompt: %s", prompt_text);
 
-    // Get vocab needed for tokenization
-    const llama_vocab* vocab = llama_model_get_vocab(instance->model);
-
-    // Tokenize prompt
-    // New API: llama_tokenize takes vocab
-    // Reverting to auto-BOS (true) for standard debug.
-    int n_prompt_tokens = -llama_tokenize(vocab, prompt_text, strlen(prompt_text), nullptr, 0, true, true);
-    std::vector<llama_token> tokens_prompt(n_prompt_tokens);
-    
-    if (llama_tokenize(vocab, prompt_text, strlen(prompt_text), tokens_prompt.data(), tokens_prompt.size(), true, true) < 0) {
-        env->ReleaseStringUTFChars(prompt, prompt_text);
-        env->ThrowNew(env->FindClass("java/lang/RuntimeException"), "Failed to tokenize prompt");
-        return JNI_FALSE;
-    }
-
-    env->ReleaseStringUTFChars(prompt, prompt_text);
-
-    if (tokens_prompt.empty()) {
-        env->ThrowNew(env->FindClass("java/lang/RuntimeException"), "Failed to tokenize prompt");
-        return JNI_FALSE;
-    }
-
-    // DEBUG: Log tokens
-    std::string token_ids_str = "";
-    for (auto id : tokens_prompt) {
-        token_ids_str += std::to_string(id) + " ";
-    }
-    LOGI("Tokenized PROMPT (%zu tokens): %s", tokens_prompt.size(), token_ids_str.c_str());
-
     // Initialize sampler chain
     llama_sampler_chain_params sparams = llama_sampler_chain_default_params();
     llama_sampler* smpl = llama_sampler_chain_init(sparams);
@@ -180,50 +172,140 @@ Java_com_mobilellama_native_LlamaEngine_nativeGenerate(
     llama_sampler_chain_add(smpl, llama_sampler_init_temp(0.7f));
     llama_sampler_chain_add(smpl, llama_sampler_init_dist(LLAMA_DEFAULT_SEED));
 
-    // Evaluate prompt tokens in batches
-    llama_batch batch = llama_batch_init(512, 0, 1);
+    llama_pos n_past = 0;
+    int n_cur = 0;
+    
+    // Get vocab needed for tokenization and generation
+    const llama_vocab* vocab = llama_model_get_vocab(instance->model);
 
-    for (size_t i = 0; i < tokens_prompt.size(); i += batch.n_tokens) {
-        common_batch_clear(batch);
-
-        size_t batch_size = std::min(size_t(batch.n_tokens), tokens_prompt.size() - i); // batch.n_tokens is just capacity here really? No, we shouldn't use batch.n_tokens as capacity check 
-        // We should check vs 512.
-        batch_size = std::min(size_t(512), tokens_prompt.size() - i);
+    // === BRANCH: Multimodal (mtmd) vs Text-only ===
+    if (instance->mm_ctx) {
+        std::string prompt_str(prompt_text);
+        mtmd_bitmap* bmp = nullptr;
+        const mtmd_bitmap* bmps[1] = {nullptr};
+        int n_bitmaps = 0;
+        jbyte* pixelsPtr = nullptr;  // Track the raw pointer for proper JNI release
         
-        for (size_t j = 0; j < batch_size; j++) {
-            common_batch_add(batch, tokens_prompt[i + j], i + j, {0}, false);
-        }
+        if (imagePixels != nullptr) {
+            pixelsPtr = env->GetByteArrayElements(imagePixels, nullptr);
+            bmp = mtmd_bitmap_init(imageWidth, imageHeight, reinterpret_cast<const unsigned char*>(pixelsPtr));
+            bmps[0] = bmp;
+            n_bitmaps = 1;
 
-        // Mark last token as logits position
-        if (i + batch_size == tokens_prompt.size()) {
-            batch.logits[batch.n_tokens - 1] = true;
+            const char* marker = mtmd_default_marker(); // `<__media__>` or similar
+            if (prompt_str.find(marker) == std::string::npos) {
+                prompt_str = std::string(marker) + "\n" + prompt_str;
+            }
         }
+        
+        mtmd_input_text text_in;
+        text_in.text = prompt_str.c_str();
+        text_in.add_special = true;
+        text_in.parse_special = true;
 
-        if (llama_decode(instance->context, batch) != 0) {
-            LOGE("Failed to decode prompt batch");
-            llama_batch_free(batch);
+        mtmd_input_chunks* chunks = mtmd_input_chunks_init();
+        int32_t res = mtmd_tokenize(instance->mm_ctx, chunks, &text_in, bmp ? bmps : nullptr, n_bitmaps);
+        
+        if (res != 0) {
+            LOGE("Failed to tokenize multimodal prompt");
+            if (imagePixels != nullptr && pixelsPtr != nullptr) {
+                env->ReleaseByteArrayElements(imagePixels, pixelsPtr, JNI_ABORT);
+            }
+            if (bmp) {
+                mtmd_bitmap_free(bmp);
+            }
+            mtmd_input_chunks_free(chunks);
             llama_sampler_free(smpl);
-            env->ThrowNew(env->FindClass("java/lang/RuntimeException"), "Failed to process prompt");
+            env->ReleaseStringUTFChars(prompt, prompt_text);
             return JNI_FALSE;
         }
+
+        LOGI("Multimodal Prompt tokenized correctly. Evaluating chunks...");
+        
+        res = mtmd_helper_eval_chunks(instance->mm_ctx, instance->context, chunks, n_past, 0, 512, true, &n_past);
+        
+        if (res != 0) {
+            LOGE("Failed to evaluate multimodal prompt chunks");
+            if (imagePixels != nullptr && pixelsPtr != nullptr) {
+                env->ReleaseByteArrayElements(imagePixels, pixelsPtr, JNI_ABORT);
+            }
+            if (bmp) {
+                mtmd_bitmap_free(bmp);
+            }
+            mtmd_input_chunks_free(chunks);
+            llama_sampler_free(smpl);
+            env->ReleaseStringUTFChars(prompt, prompt_text);
+            return JNI_FALSE;
+        }
+
+        n_cur = mtmd_helper_get_n_pos(chunks);
+        
+        mtmd_input_chunks_free(chunks);
+        if (imagePixels != nullptr && pixelsPtr != nullptr) {
+            env->ReleaseByteArrayElements(imagePixels, pixelsPtr, JNI_ABORT);
+        }
+        if (bmp) {
+            mtmd_bitmap_free(bmp);
+        }
+    } else {
+        // Pure Text-only evaluation path
+        int n_prompt_tokens = -llama_tokenize(vocab, prompt_text, strlen(prompt_text), nullptr, 0, true, true);
+        std::vector<llama_token> tokens_prompt(n_prompt_tokens);
+        
+        if (llama_tokenize(vocab, prompt_text, strlen(prompt_text), tokens_prompt.data(), tokens_prompt.size(), true, true) < 0) {
+            env->ReleaseStringUTFChars(prompt, prompt_text);
+            llama_sampler_free(smpl);
+            env->ThrowNew(env->FindClass("java/lang/RuntimeException"), "Failed to tokenize prompt");
+            return JNI_FALSE;
+        }
+
+        if (tokens_prompt.empty()) {
+            env->ReleaseStringUTFChars(prompt, prompt_text);
+            llama_sampler_free(smpl);
+            env->ThrowNew(env->FindClass("java/lang/RuntimeException"), "Failed to tokenize prompt");
+            return JNI_FALSE;
+        }
+
+        llama_batch eval_batch = llama_batch_init(512, 0, 1);
+        for (size_t i = 0; i < tokens_prompt.size(); i += eval_batch.n_tokens) {
+            common_batch_clear(eval_batch);
+            size_t batch_size = std::min(size_t(512), tokens_prompt.size() - i);
+            for (size_t j = 0; j < batch_size; j++) {
+                common_batch_add(eval_batch, tokens_prompt[i + j], i + j, {0}, false);
+            }
+            if (i + batch_size == tokens_prompt.size()) {
+                eval_batch.logits[eval_batch.n_tokens - 1] = true;
+            }
+            if (llama_decode(instance->context, eval_batch) != 0) {
+                LOGE("Failed to decode prompt batch");
+                llama_batch_free(eval_batch);
+                llama_sampler_free(smpl);
+                env->ReleaseStringUTFChars(prompt, prompt_text);
+                env->ThrowNew(env->FindClass("java/lang/RuntimeException"), "Failed to process prompt");
+                return JNI_FALSE;
+            }
+        }
+        n_cur = tokens_prompt.size();
+        llama_batch_free(eval_batch);
     }
+    
+    env->ReleaseStringUTFChars(prompt, prompt_text);
 
     // Get callback method
     jclass callbackClass = env->GetObjectClass(callback);
     jmethodID invokeMethod = env->GetMethodID(callbackClass, "invoke", "(Ljava/lang/Object;)Ljava/lang/Object;");
     if (!invokeMethod) {
         LOGE("Failed to find callback invoke method");
-        llama_batch_free(batch);
         llama_sampler_free(smpl);
         return JNI_FALSE;
     }
 
     // Generation loop
     int n_generated = 0;
-    int n_ctx = llama_n_ctx(instance->context);
-    int n_cur = tokens_prompt.size();
+    int n_ctx_max = llama_n_ctx(instance->context);
+    llama_batch batch = llama_batch_init(1, 0, 1);
 
-    while (n_generated < maxTokens && n_cur < n_ctx) {
+    while (n_generated < maxTokens && n_cur < n_ctx_max) {
         if (instance->stop_requested) {
             LOGI("Generation stopped by user");
             break;
@@ -346,6 +428,9 @@ Java_com_mobilellama_native_LlamaEngine_nativeFree(
     LlamaInstance* instance = reinterpret_cast<LlamaInstance*>(handle);
     if (instance) {
         LOGI("Freeing model resources");
+        if (instance->mm_ctx) {
+            mtmd_free(instance->mm_ctx);
+        }
         if (instance->context) {
             llama_free(instance->context);
         }

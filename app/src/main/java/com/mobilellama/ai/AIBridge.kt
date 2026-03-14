@@ -76,10 +76,14 @@ object AIBridge {
     external fun destroyHRM()
 
     // ─────────────────────────────────────────
+    // Vision Engine (Image Classification / Detection) [REMOVED - Replaced by LLaVA in LlamaEngine]
+    // ─────────────────────────────────────────
+
+    // ─────────────────────────────────────────
     // Utility
     // ─────────────────────────────────────────
 
-    external fun getEngineStatus(): Int  // bitmask: 0b01=LLM, 0b10=HRM, 0b11=both
+    external fun getEngineStatus(): Int  // bitmask: 0b001=LLM, 0b010=HRM
 
     val isLLMReady: Boolean get() = loaded && (getEngineStatus() and 1) != 0
     val isHRMReady: Boolean get() = loaded && (getEngineStatus() and 2) != 0

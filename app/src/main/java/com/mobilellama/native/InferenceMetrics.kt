@@ -109,7 +109,7 @@ object InferenceMetrics {
     fun getCurrentTokensPerSecond(): Double {
         if (tokenTimings.isEmpty()) return 0.0
         
-        val recentTimings = tokenTimings.takeLast(20) // Last 20 tokens
+        val recentTimings = tokenTimings.toList().takeLast(20) // Last 20 tokens
         val avgLatencyNs = recentTimings.average()
         return if (avgLatencyNs > 0) 1_000_000_000.0 / avgLatencyNs else 0.0
     }
@@ -170,9 +170,9 @@ object InferenceMetrics {
         val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             val current = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW)
-            val voltage = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_VOLTAGE)
+            val voltage = 3800 // Fallback to ~3.8V typical battery voltage for estimation
             if (current != 0 && voltage != 0) {
-                (current.toDouble() * voltage.toDouble()) / 1000.0 // mW
+                (Math.abs(current).toDouble() * voltage.toDouble()) / 1000.0 // mW
             } else {
                 1500.0 // Default estimate during inference
             }

@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
@@ -81,7 +82,8 @@ fun ModelManagerScreen(
                     state = state,
                     isSelected = isSelected,
                     onDownload = { viewModel.startDownload(model) },
-                    onSelect = { viewModel.selectModel(model) }
+                    onSelect = { viewModel.selectModel(model) },
+                    onDelete = { viewModel.deleteModel(model) }
                 )
             }
         }
@@ -94,8 +96,45 @@ fun ModelCard(
     state: DownloadState,
     isSelected: Boolean,
     onDownload: () -> Unit,
-    onSelect: () -> Unit
+    onSelect: () -> Unit,
+    onDelete: () -> Unit = {}
 ) {
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
+    // Confirmation dialog
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = {
+                Text(
+                    "Delete Model",
+                    fontWeight = FontWeight.Bold,
+                    color = com.mobilellama.ui.theme.HighlightWhitePurple
+                )
+            },
+            text = {
+                Text(
+                    "Delete \"${model.name}\" (${model.expectedSize / 1024 / 1024} MB)? You can re-download it later.",
+                    color = com.mobilellama.ui.theme.HighlightWhitePurple.copy(alpha = 0.8f)
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDeleteDialog = false
+                    onDelete()
+                }) {
+                    Text("Delete", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Cancel", color = com.mobilellama.ui.theme.LightLavender)
+                }
+            },
+            containerColor = com.mobilellama.ui.theme.DeepBlackPurple,
+            shape = RoundedCornerShape(16.dp)
+        )
+    }
     InferenceCard {
         Row(
             verticalAlignment = Alignment.CenterVertically
@@ -140,34 +179,50 @@ fun ModelCard(
                     }
                     
                     is DownloadState.Success -> {
-                        if (isSelected) {
-                            // ACTIVE Badge (Filled)
-                            Box(
-                                modifier = Modifier
-                                    .background(com.mobilellama.ui.theme.VibrantPurple, RoundedCornerShape(8.dp))
-                                    .padding(horizontal = 12.dp, vertical = 6.dp)
-                            ) {
-                                Text(
-                                    text = "ACTIVE",
-                                    color = Color.White,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.Bold
-                                )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            if (isSelected) {
+                                // ACTIVE Badge (Filled)
+                                Box(
+                                    modifier = Modifier
+                                        .background(com.mobilellama.ui.theme.VibrantPurple, RoundedCornerShape(8.dp))
+                                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                                ) {
+                                    Text(
+                                        text = "ACTIVE",
+                                        color = Color.White,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            } else {
+                                // READY Badge (Outlined)
+                                Box(
+                                    modifier = Modifier
+                                        .border(1.dp, com.mobilellama.ui.theme.LightLavender, RoundedCornerShape(8.dp))
+                                        .clickable { onSelect() }
+                                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                                ) {
+                                    Text(
+                                        text = "READY",
+                                        color = com.mobilellama.ui.theme.LightLavender,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
                             }
-                        } else {
-                            // READY Badge (Outlined)
-                            // Clickable to select
-                            Box(
-                                modifier = Modifier
-                                    .border(1.dp, com.mobilellama.ui.theme.LightLavender, RoundedCornerShape(8.dp))
-                                    .clickable { onSelect() }
-                                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                            // Delete button
+                            IconButton(
+                                onClick = { showDeleteDialog = true },
+                                modifier = Modifier.size(32.dp)
                             ) {
-                                Text(
-                                    text = "READY",
-                                    color = com.mobilellama.ui.theme.LightLavender,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.Bold
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = "Delete model",
+                                    tint = com.mobilellama.ui.theme.HighlightWhitePurple.copy(alpha = 0.5f),
+                                    modifier = Modifier.size(18.dp)
                                 )
                             }
                         }

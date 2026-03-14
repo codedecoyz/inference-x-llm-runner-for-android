@@ -53,4 +53,10 @@ class DownloadViewModel @Inject constructor(
     fun startSelectedDownload() {
         startDownload(selectedModel.value)
     }
+
+    fun deleteModel(model: AiModel) {
+        viewModelScope.launch {
+            modelRepository.deleteModel(model)
+        }
+    }
 }

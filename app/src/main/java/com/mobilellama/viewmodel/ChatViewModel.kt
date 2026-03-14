@@ -106,25 +106,35 @@ class ChatViewModel @Inject constructor(
     }
 
     private suspend fun reloadModel() {
+        val selectedModel = modelRepository.selectedModel.value
+
+        // Vision models should only be used via the Vision Camera screen
+        if (selectedModel.promptType == com.mobilellama.data.model.PromptType.VISION) {
+            Log.i(TAG, "Selected model '${selectedModel.name}' is a Vision model — skipping text chat initialization.")
+            return
+        }
+
         val modelPath = modelRepository.getModelPath()
         val file = java.io.File(modelPath)
 
         if (file.exists()) {
-            Log.i(TAG, "Reloading model from: $modelPath")
-            inferenceRepository.release()
+            Log.i(TAG, "Requesting model load for: $modelPath")
             inferenceRepository.initializeModel(modelPath)
             
             // Try to initialize HRM if available
             val hrmFile = java.io.File(context.filesDir, "hrm/hrm.onnx")
-            if (hrmFile.exists() && AIBridge.loaded) {
+            if (hrmFile.exists() && AIBridge.loaded && !AIBridge.isHRMReady) {
+                Log.i(TAG, "HRM not initialized yet. Initializing HRM Engine.")
                 val hrmOk = AIBridge.initHRM(
                     modelPath = hrmFile.absolutePath,
                     inputDim = 64, hDim = 256, lDim = 128, outputDim = 64,
                     maxOuter = 20, maxInner = 10, haltThresh = 0.9f
                 )
                 Log.i(TAG, "HRM Engine initialization: \${if (hrmOk) \"SUCCESS\" else \"FAILED\"}")
-            } else {
+            } else if (!hrmFile.exists() || !AIBridge.loaded) {
                 Log.i(TAG, "No hrm.onnx found at \${hrmFile.absolutePath} or AIBridge not loaded.")
+            } else {
+                Log.i(TAG, "HRM Engine is already initialized.")
             }
         } else {
             Log.w(TAG, "Selected model file not found: $modelPath")
@@ -233,41 +243,61 @@ class ChatViewModel @Inject constructor(
                 } else {
                     Log.w(TAG, "HRM Engine failed to produce output. Falling back to llama.cpp.")
                 }
+            } else if (IntentRouter.shouldUseLayerStreaming()) {
+                Log.i(TAG, "Routing query to Layer Streaming Engine (ONNX)")
+                
+                // Mock Tokenization (To be replaced with a real tokenizer like SentencePiece)
+                val dummyTokens = IntArray(userMessage.length) { i -> userMessage[i].code }
+                
+                withContext(Dispatchers.IO) {
+                    AIBridge.generateLLM(
+                        inputTokens = dummyTokens,
+                        maxNewTokens = 512,
+                        temperature = 0.7f,
+                        topP = 0.9f,
+                        callback = object : AIBridge.TokenCallback {
+                            override fun onToken(token: String, done: Boolean) {
+                                viewModelScope.launch(Dispatchers.Main) {
+                                    _currentAssistantMessage.value += token
+                                }
+                            }
+                        }
+                    )
+                }
+                
+                saveAssistantResponse(chat, userMessage)
+                return
             }
 
-            // --- Language Task (or HRM Fallback): Use existing llama.cpp ---
+            // --- Language Task (or Layer Streaming Fallback): Use existing llama.cpp ---
             val contextMessages = memoryManager.buildContextForInference(chat)
             val fullPrompt = getPromptStr(contextMessages)
 
             Log.d(TAG, "Sending prompt to engine (${fullPrompt.length} chars)")
 
+            val modelPath = modelRepository.getModelPath()
+            com.mobilellama.native.InferenceMetrics.startSession(modelPath, "Q4_K_M")
+            var isFirstToken = true
+            var lastTokenTime = System.nanoTime()
+
             val result = inferenceRepository.generateResponse(fullPrompt) { token ->
+                val nowNs = System.nanoTime()
+                if (isFirstToken) {
+                    com.mobilellama.native.InferenceMetrics.recordFirstToken()
+                    isFirstToken = false
+                } else {
+                    com.mobilellama.native.InferenceMetrics.recordToken(nowNs - lastTokenTime)
+                }
+                lastTokenTime = nowNs
+
                 viewModelScope.launch(Dispatchers.Main) {
                     _currentAssistantMessage.value += token
                 }
             }
 
             if (result.isSuccess) {
-                val responseText = _currentAssistantMessage.value
-
-                val assistantMessage = Message(
-                    chatId = chatId, role = "assistant", content = responseText,
-                    timestamp = System.currentTimeMillis(), tokenCount = responseText.length / 4
-                )
-
-                val insertedId = withContext(Dispatchers.IO) {
-                    val id = messageDao.insertMessage(assistantMessage)
-                    chatDao.updateLastMessageAt(chatId, System.currentTimeMillis())
-                    id
-                }
-
-                _messages.value = _messages.value + assistantMessage.copy(id = insertedId)
-                paginationOffset++
-                _currentAssistantMessage.value = ""
-
-                if (chat.title.isBlank()) {
-                    generateTitle(userMessage)
-                }
+                com.mobilellama.native.InferenceMetrics.endSession(context, modelPath)
+                saveAssistantResponse(chat, userMessage)
             } else {
                 val error = result.exceptionOrNull()
                 _errorMessage.value = error?.message ?: "Generation failed"
@@ -278,6 +308,29 @@ class ChatViewModel @Inject constructor(
             _errorMessage.value = "Inference failed: ${e.message}"
         } finally {
             _isGenerating.value = false
+        }
+    }
+
+    private suspend fun saveAssistantResponse(chat: Chat, userMessage: String) {
+        val responseText = _currentAssistantMessage.value
+
+        val assistantMessage = Message(
+            chatId = chatId, role = "assistant", content = responseText,
+            timestamp = System.currentTimeMillis(), tokenCount = responseText.length / 4
+        )
+
+        val insertedId = withContext(Dispatchers.IO) {
+            val id = messageDao.insertMessage(assistantMessage)
+            chatDao.updateLastMessageAt(chatId, System.currentTimeMillis())
+            id
+        }
+
+        _messages.value = _messages.value + assistantMessage.copy(id = insertedId)
+        paginationOffset++
+        _currentAssistantMessage.value = ""
+
+        if (chat.title.isBlank()) {
+            generateTitle(userMessage)
         }
     }
 
@@ -406,6 +459,9 @@ class ChatViewModel @Inject constructor(
                         sb.append(" ${msg.content} </s>[INST] ")
                     }
                 }
+            }
+            com.mobilellama.data.model.PromptType.VISION -> {
+                sb.append("Vision mode does not use this text prompt generator.")
             }
         }
         return sb.toString()

@@ -24,16 +24,16 @@ object PerformanceLogger {
                 val metricsDir = File(context.filesDir, METRICS_DIR)
                 if (!metricsDir.exists()) metricsDir.mkdirs()
                 
-                val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US)
-                    .format(Date(metrics.timestamp))
-                val fileName = "session_${timestamp}_${metrics.sessionId.take(8)}.csv"
-                val file = File(metricsDir, fileName)
+                val file = File(metricsDir, "master_metrics.csv")
+                val isNewFile = !file.exists()
                 
-                file.bufferedWriter().use { writer ->
+                java.io.FileWriter(file, true).buffered().use { writer ->
                     // Header
-                    writer.write("session_id,model_path,quantization,device_model,android_version,")
-                    writer.write("total_tokens,avg_tok_s,peak_tok_s,ttft_ms,avg_memory_mb,")
-                    writer.write("peak_memory_mb,avg_power_mw,session_duration_ms,timestamp\n")
+                    if (isNewFile) {
+                        writer.write("session_id,model_path,quantization,device_model,android_version,")
+                        writer.write("total_tokens,avg_tok_s,peak_tok_s,ttft_ms,avg_memory_mb,")
+                        writer.write("peak_memory_mb,avg_power_mw,session_duration_ms,timestamp\n")
+                    }
                     
                     // Data row
                     writer.write("${metrics.sessionId},")

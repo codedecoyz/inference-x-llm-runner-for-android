@@ -20,7 +20,7 @@ class LlamaEngine {
                 System.loadLibrary("ggml-base")
                 Log.i(TAG, "Attempting to load libggml-cpu (v3)...")
                 System.loadLibrary("ggml-cpu")
-                System.loadLibrary("ggml-vulkan") // ⚡ Vulkan Hardware Acceleration
+                System.loadLibrary("ggml-opencl") // ⚡ OpenCL Hardware Acceleration
                 Log.i(TAG, "Attempting to load libggml (v3)...")
                 System.loadLibrary("ggml")
                 Log.i(TAG, "Loaded libggml. Attempting to load libllama (v3)...")
@@ -36,8 +36,13 @@ class LlamaEngine {
     }
 
     // Native method declarations
-    private external fun nativeInit(modelPath: String, contextSize: Int, numThreads: Int): Long
-    private external fun nativeGenerate(handle: Long, prompt: String, maxTokens: Int, callback: (String) -> Unit): Boolean
+    private external fun nativeInit(modelPath: String, mmprojPath: String?, contextSize: Int, numThreads: Int): Long
+    private external fun nativeGenerate(
+        handle: Long, 
+        prompt: String, 
+        imagePixels: ByteArray?, imageWidth: Int, imageHeight: Int,
+        maxTokens: Int, callback: (String) -> Unit
+    ): Boolean
     private external fun nativeStop(handle: Long)
     private external fun nativeClearCache(handle: Long)
     private external fun nativeFree(handle: Long)
@@ -46,24 +51,21 @@ class LlamaEngine {
      * Initialize the model with the given path.
      * Should be called from background thread (Dispatchers.IO).
      */
-    suspend fun initialize(modelPath: String): Result<Unit> = withContext(Dispatchers.IO) {
+    suspend fun initialize(modelPath: String, mmprojPath: String? = null): Result<Unit> = withContext(Dispatchers.IO) {
         try {
             if (isInitialized) {
                 return@withContext Result.failure(IllegalStateException("Engine already initialized"))
             }
 
-            Log.i(TAG, "Initializing model from: $modelPath")
+            Log.i(TAG, "Initializing model from: $modelPath (mmproj: ${mmprojPath ?: "none"})")
 
-            val contextSize = 2048
-            // For typical ARM big.LITTLE architectures, using all cores (or cores-2) 
-            // is a known anti-pattern for llama.cpp because the slow LITTLE cores 
-            // bottleneck synchronization. Capping at 4 targets the performance cores.
+            val contextSize = 2084 // Give a tiny extra buffer for Vision token payload overhead
             val availableProcessors = Runtime.getRuntime().availableProcessors()
             val numThreads = if (availableProcessors >= 8) 4 else availableProcessors.coerceAtLeast(1).coerceAtMost(4)
 
             Log.i(TAG, "Initializing with threads: $numThreads (available: $availableProcessors) - optimized for big cores")
 
-            handle = nativeInit(modelPath, contextSize, numThreads)
+            handle = nativeInit(modelPath, mmprojPath, contextSize, numThreads)
 
             if (handle == 0L) {
                 return@withContext Result.failure(RuntimeException("Failed to initialize model"))
@@ -94,6 +96,7 @@ class LlamaEngine {
      */
     suspend fun generate(
         prompt: String,
+        imageBitmap: android.graphics.Bitmap? = null,
         maxTokens: Int = 512,
         onToken: (String) -> Unit
     ): Result<Unit> = withContext(Dispatchers.IO) {
@@ -102,9 +105,29 @@ class LlamaEngine {
                 return@withContext Result.failure(IllegalStateException("Engine not initialized"))
             }
 
-            Log.i(TAG, "Starting generation (maxTokens=$maxTokens)")
+            Log.i(TAG, "Starting generation (maxTokens=$maxTokens, hasImage=${imageBitmap != null})")
 
-            val success = nativeGenerate(handle, prompt, maxTokens, onToken)
+            var imagePixels: ByteArray? = null
+            var imageWidth = 0
+            var imageHeight = 0
+
+            if (imageBitmap != null) {
+                imageWidth = imageBitmap.width
+                imageHeight = imageBitmap.height
+                val pixels = IntArray(imageWidth * imageHeight)
+                imageBitmap.getPixels(pixels, 0, imageWidth, 0, 0, imageWidth, imageHeight)
+                
+                // Extract RGB into ByteArray
+                imagePixels = ByteArray(imageWidth * imageHeight * 3)
+                var offset = 0
+                for (pixel in pixels) {
+                    imagePixels[offset++] = (pixel shr 16 and 0xFF).toByte() // R
+                    imagePixels[offset++] = (pixel shr 8 and 0xFF).toByte()  // G
+                    imagePixels[offset++] = (pixel and 0xFF).toByte()        // B
+                }
+            }
+
+            val success = nativeGenerate(handle, prompt, imagePixels, imageWidth, imageHeight, maxTokens, onToken)
 
             if (success) {
                 Log.i(TAG, "Generation completed successfully")

@@ -20,6 +20,7 @@ class InferenceRepository @Inject constructor(
     val inferenceState: StateFlow<InferenceState> = _inferenceState.asStateFlow()
 
     private var llamaEngine: LlamaEngine? = null
+    private var _currentLoadedModelPath: String? = null
 
     companion object {
         private const val TAG = "InferenceRepository"
@@ -42,12 +43,17 @@ You are a helpful assistant.</s>
 """
     }
 
-    suspend fun initializeModel(modelPath: String): Result<Unit> = withContext(Dispatchers.IO) {
+    suspend fun initializeModel(modelPath: String, mmprojPath: String? = null): Result<Unit> = withContext(Dispatchers.IO) {
         // ... (lines 44-119 same until generateResponse)
         try {
             if (_inferenceState.value is InferenceState.Ready) {
-                // ... same
-                return@withContext Result.success(Unit)
+                if (_currentLoadedModelPath == modelPath) {
+                    Log.i(TAG, "Model $modelPath is already loaded, skipping initialization")
+                    return@withContext Result.success(Unit)
+                } else {
+                    Log.i(TAG, "Different model requested. Releasing old model.")
+                    release()
+                }
             }
             // ... same
             _inferenceState.value = InferenceState.Initializing
@@ -84,7 +90,7 @@ You are a helpful assistant.</s>
             val engine = LlamaEngine()
             // Keep pfd referenced so it doesn't get GC'd and closed before native loads it
             val result = try {
-                engine.initialize(fdPath)
+                engine.initialize(fdPath, mmprojPath)
             } finally {
                 // ... (keep safe close)
                 try {
@@ -96,6 +102,7 @@ You are a helpful assistant.</s>
 
             if (result.isSuccess) {
                 llamaEngine = engine
+                _currentLoadedModelPath = modelPath
                 _inferenceState.value = InferenceState.Ready
                 Log.i(TAG, "Model initialized successfully")
                 Result.success(Unit)
@@ -117,9 +124,11 @@ You are a helpful assistant.</s>
 
     /**
      * @param prompt The full prompt (including history and special tokens) to send to the model.
+     * @param imageBitmap Optional image to embed into the prompt tokens prior to generation.
      */
     suspend fun generateResponse(
         prompt: String,
+        imageBitmap: android.graphics.Bitmap? = null,
         onToken: (String) -> Unit
     ): Result<Unit> = withContext(Dispatchers.IO) {
         try {
@@ -154,6 +163,7 @@ You are a helpful assistant.</s>
 
             val result = engine.generate(
                 prompt = prompt,
+                imageBitmap = imageBitmap,
                 maxTokens = maxTokens,
                 onToken = { token ->
                     tokenCount++

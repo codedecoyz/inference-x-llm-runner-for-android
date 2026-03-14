@@ -90,11 +90,23 @@ class ModelRepository @Inject constructor(
     // Check if SPECIFIC model is on disk
     fun isModelDownloaded(model: AiModel): Boolean {
         val file = File(context.getExternalFilesDir(null), "models/${model.filename}")
-        return file.exists() && file.length() > 0
+        val hasMain = file.exists() && file.length() > 0
+        if (!hasMain) return false
+        
+        if (model.mmprojFilename != null) {
+            val projFile = File(context.getExternalFilesDir(null), "models/${model.mmprojFilename}")
+            return projFile.exists() && projFile.length() > 0
+        }
+        return true
     }
 
     fun getModelPath(): String {
         return File(context.getExternalFilesDir(null), "models/${selectedModel.value.filename}").absolutePath
+    }
+    
+    fun getMmprojPath(model: AiModel): String? {
+        if (model.mmprojFilename == null) return null
+        return File(context.getExternalFilesDir(null), "models/${model.mmprojFilename}").absolutePath
     }
 
     // Initial check for ALL models
@@ -121,8 +133,10 @@ class ModelRepository @Inject constructor(
 
             // Check available storage
             val availableBytes = getAvailableStorageBytes()
-            if (availableBytes < targetModel.expectedSize + 50_000_000) { 
-                val errorMsg = "Storage full. Need ${(targetModel.expectedSize / 1024 / 1024)} MB."
+            val totalExpected = targetModel.expectedSize + (targetModel.mmprojExpectedSize ?: 0L)
+            
+            if (availableBytes < totalExpected + 50_000_000) { 
+                val errorMsg = "Storage full. Need ${(totalExpected / 1024 / 1024)} MB."
                 updateModelState(targetModel.filename, DownloadState.Error(errorMsg, false))
                 return@withContext
             }
@@ -130,76 +144,99 @@ class ModelRepository @Inject constructor(
             val modelDir = File(context.getExternalFilesDir(null), "models")
             if (!modelDir.exists()) modelDir.mkdirs()
 
-            val tempFile = File(context.cacheDir, "${targetModel.filename}.tmp")
-            val finalFile = File(modelDir, targetModel.filename)
-            val downloadUrl = targetModel.url
-            val expectedSize = targetModel.expectedSize
+            val successMain = downloadSingleFile(
+                targetModel.url, targetModel.filename, targetModel.expectedSize, 
+                targetModel.filename, 0f, if (targetModel.mmprojUrl != null) 0.8f else 1.0f
+            )
+            if (!successMain) return@withContext
 
-            Log.i(TAG, "Starting download for ${targetModel.name}")
-
-            val existingLength = if (tempFile.exists()) tempFile.length() else 0L
-            val isResume = existingLength > 0 && existingLength < expectedSize
-
-            val requestBuilder = Request.Builder().url(downloadUrl)
-            if (isResume) {
-                requestBuilder.header("Range", "bytes=$existingLength-")
+            if (targetModel.mmprojUrl != null && targetModel.mmprojFilename != null) {
+                val successProj = downloadSingleFile(
+                    targetModel.mmprojUrl, targetModel.mmprojFilename, targetModel.mmprojExpectedSize ?: 0L,
+                    targetModel.filename, 0.8f, 0.2f
+                )
+                if (!successProj) return@withContext
             }
 
-            val response = client.newCall(requestBuilder.build()).execute()
-
-            if (!response.isSuccessful) {
-                if (response.code == 416) tempFile.delete()
-                val errorMsg = "Network error: ${response.code}"
-                updateModelState(targetModel.filename, DownloadState.Error(errorMsg, true))
-                return@withContext
-            }
-
-            val isResumed = isResume && response.code == 206
-            val contentLength = response.body?.contentLength() ?: 0L
-            val totalExpected = if (isResumed) existingLength + contentLength else contentLength
-
-            Log.i(TAG, "Download started: $contentLength bytes")
-
-            response.body?.byteStream()?.use { input ->
-                FileOutputStream(tempFile, isResumed).use { output ->
-                    val buffer = ByteArray(8192)
-                    var bytesRead: Int
-                    var totalBytesRead = if (isResumed) existingLength else 0L
-                    var lastProgress = 0f
-
-                    while (input.read(buffer).also { bytesRead = it } != -1) {
-                        output.write(buffer, 0, bytesRead)
-                        totalBytesRead += bytesRead
-                        
-                        val progress = if (totalExpected > 0) totalBytesRead.toFloat() / totalExpected else 0f
-                        if (progress - lastProgress >= 0.01f || progress >= 1.0f) {
-                            updateModelState(targetModel.filename, DownloadState.Downloading(progress, totalBytesRead, totalExpected))
-                            lastProgress = progress
-                        }
-                    }
-                }
-            }
-
-            updateModelState(targetModel.filename, DownloadState.Verifying)
-
-            val actualSize = tempFile.length()
-            if (actualSize != totalExpected && totalExpected > 0) {
-                 val msg = "Download incomplete. Expected $totalExpected, got $actualSize"
-                 updateModelState(targetModel.filename, DownloadState.Error(msg, true))
-                 return@withContext
-            }
-
-            if (finalFile.exists()) finalFile.delete()
-            if (tempFile.renameTo(finalFile) || (tempFile.copyTo(finalFile, true).also { tempFile.delete() }.exists())) {
-                 updateModelState(targetModel.filename, DownloadState.Success)
-                 Log.i(TAG, "Download success: ${targetModel.name}")
-            } else {
-                 updateModelState(targetModel.filename, DownloadState.Error("Failed to save file", true))
-            }
+            updateModelState(targetModel.filename, DownloadState.Success)
+            Log.i(TAG, "Download success: ${targetModel.name}")
 
         } catch (e: Exception) {
             Log.e(TAG, "Download failed", e)
             updateModelState(targetModel.filename, DownloadState.Error(e.message ?: "Error", true))
+        }
+    }
+
+    private fun downloadSingleFile(
+        url: String, filename: String, expectedSize: Long, trackerName: String,
+        progressOffset: Float, progressScale: Float
+    ): Boolean {
+        val modelDir = File(context.getExternalFilesDir(null), "models")
+        val tempFile = File(context.cacheDir, "$filename.tmp")
+        val finalFile = File(modelDir, filename)
+
+        if (finalFile.exists() && finalFile.length() == expectedSize) return true
+
+        Log.i(TAG, "Starting download for $filename")
+
+        val existingLength = if (tempFile.exists()) tempFile.length() else 0L
+        val isResume = existingLength > 0 && existingLength < expectedSize
+
+        val requestBuilder = Request.Builder().url(url)
+        if (isResume) {
+            requestBuilder.header("Range", "bytes=$existingLength-")
+        }
+
+        val response = client.newCall(requestBuilder.build()).execute()
+
+        if (!response.isSuccessful) {
+            if (response.code == 416) tempFile.delete()
+            val errorMsg = "Network error: ${response.code} for $filename"
+            updateModelState(trackerName, DownloadState.Error(errorMsg, true))
+            return false
+        }
+
+        val isResumed = isResume && response.code == 206
+        val contentLength = response.body?.contentLength() ?: 0L
+        val totalExpected = if (isResumed) existingLength + contentLength else contentLength
+
+        response.body?.byteStream()?.use { input ->
+            FileOutputStream(tempFile, isResumed).use { output ->
+                val buffer = ByteArray(8192)
+                var bytesRead: Int
+                var totalBytesRead = if (isResumed) existingLength else 0L
+                var lastProgress = 0f
+
+                while (input.read(buffer).also { bytesRead = it } != -1) {
+                    output.write(buffer, 0, bytesRead)
+                    totalBytesRead += bytesRead
+                    
+                    val fileProgress = if (totalExpected > 0) totalBytesRead.toFloat() / totalExpected else 0f
+                    val overallProgress = progressOffset + (fileProgress * progressScale)
+                    
+                    if (overallProgress - lastProgress >= 0.01f || fileProgress >= 1.0f) {
+                        updateModelState(trackerName, DownloadState.Downloading(overallProgress, (overallProgress * 100).toLong(), 100L))
+                        lastProgress = overallProgress
+                    }
+                }
+            }
+        }
+
+        updateModelState(trackerName, DownloadState.Verifying)
+
+        val actualSize = tempFile.length()
+        if (actualSize != totalExpected && totalExpected > 0) {
+             val msg = "Download incomplete. Expected $totalExpected, got $actualSize"
+             updateModelState(trackerName, DownloadState.Error(msg, true))
+             return false
+        }
+
+        if (finalFile.exists()) finalFile.delete()
+        if (tempFile.renameTo(finalFile) || (tempFile.copyTo(finalFile, true).also { tempFile.delete() }.exists())) {
+             return true
+        } else {
+             updateModelState(trackerName, DownloadState.Error("Failed to save file", true))
+             return false
         }
     }
 
@@ -210,6 +247,43 @@ class ModelRepository @Inject constructor(
         } catch (e: Exception) { 0L }
     }
     
+    suspend fun deleteModel(model: AiModel) = withContext(Dispatchers.IO) {
+        try {
+            val modelDir = File(context.getExternalFilesDir(null), "models")
+            
+            // Delete main model file
+            val mainFile = File(modelDir, model.filename)
+            if (mainFile.exists()) {
+                mainFile.delete()
+                Log.i(TAG, "Deleted model file: ${model.filename}")
+            }
+            
+            // Delete mmproj file if it exists
+            if (model.mmprojFilename != null) {
+                val projFile = File(modelDir, model.mmprojFilename)
+                if (projFile.exists()) {
+                    projFile.delete()
+                    Log.i(TAG, "Deleted mmproj file: ${model.mmprojFilename}")
+                }
+            }
+            
+            // Reset state to Idle
+            updateModelState(model.filename, DownloadState.Idle)
+            
+            // If the deleted model was selected, switch to the default
+            if (_selectedModel.value.name == model.name) {
+                val defaultModel = ModelRegistry.getDefault()
+                _selectedModel.value = defaultModel
+                prefs.edit().putString(PREF_SELECTED_MODEL, defaultModel.name).apply()
+                Log.i(TAG, "Switched to default model: ${defaultModel.name}")
+            }
+            
+            Log.i(TAG, "Model deleted: ${model.name}")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to delete model: ${model.name}", e)
+        }
+    }
+
     fun resetDownloadState() {
         // Deprecated, resets SELECTED model state
         updateModelState(_selectedModel.value.filename, DownloadState.Idle)

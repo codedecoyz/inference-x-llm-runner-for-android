@@ -21,6 +21,7 @@ import com.mobilellama.ui.screens.ChatListScreen
 import com.mobilellama.ui.screens.ChatScreen
 import com.mobilellama.ui.screens.OnboardingScreen
 import com.mobilellama.ui.screens.SplashScreen
+import com.mobilellama.ui.screens.VisionCameraScreen
 import com.mobilellama.ui.theme.MobileLlamaTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -61,11 +62,17 @@ fun MobileLlamaApp(modelRepository: ModelRepository) {
         drawerState = drawerState,
         drawerContent = {
             com.mobilellama.ui.components.Sidebar(
-                onModelSelected = {
+                onModelSelected = { model ->
                     scope.launch { drawerState.close() }
-                    // Navigate to chatList for the new model
-                    navController.navigate("chatList") {
-                        popUpTo("chatList") { inclusive = true }
+                    // Vision models go to Vision Camera, text models to Chat List
+                    if (model.promptType == com.mobilellama.data.model.PromptType.VISION) {
+                        navController.navigate("vision") {
+                            popUpTo("chatList") { inclusive = true }
+                        }
+                    } else {
+                        navController.navigate("chatList") {
+                            popUpTo("chatList") { inclusive = true }
+                        }
                     }
                 },
                 onManageModels = {
@@ -124,6 +131,15 @@ fun MobileLlamaApp(modelRepository: ModelRepository) {
                     onBack = {
                         if (navController.previousBackStackEntry != null) navController.popBackStack()
                         else navController.navigate("chatList")
+                    }
+                )
+            }
+
+            // Vision Camera Screen
+            composable("vision") {
+                VisionCameraScreen(
+                    onOpenDrawer = {
+                        scope.launch { drawerState.open() }
                     }
                 )
             }

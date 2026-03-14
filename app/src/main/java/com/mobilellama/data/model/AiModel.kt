@@ -4,7 +4,8 @@ enum class PromptType {
     CHATML,     // <|im_start|>system...
     PHI3,       // <|system|>...<|end|>
     MISTRAL,    // <s>[INST]...[/INST]
-    TINYLLAMA   // <|system|>... (ChatML-like but specific)
+    TINYLLAMA,  // <|system|>... (ChatML-like but specific)
+    VISION      // Image Classification / Object Detection
 }
 
 data class AiModel(
@@ -14,7 +15,12 @@ data class AiModel(
     val expectedSize: Long,
     val promptType: PromptType,
     val description: String,
-    val ramRequiredGB: Int
+    val ramRequiredGB: Int,
+    
+    // Optional fields for Vision-Language Models (VLM)
+    val mmprojFilename: String? = null,
+    val mmprojUrl: String? = null,
+    val mmprojExpectedSize: Long? = null
 )
 
 object ModelRegistry {
@@ -49,11 +55,61 @@ object ModelRegistry {
         AiModel(
             name = "Mistral 7B v0.3",
             filename = "mistral-7b-instruct-v0.3.Q4_K_M.gguf",
-            url = "https://huggingface.co/maziyarpanahi/Mistral-7B-Instruct-v0.3-GGUF/resolve/main/Mistral-7B-Instruct-v0.3.Q4_K_M.gguf",
+            url = "https://huggingface.co/maziyarpanahi/Mistral-7B-Instruct-v0.3-GGUF/resolve/main/mistral-7b-instruct-v0.3.Q4_K_M.gguf",
             expectedSize = 4370000000L, // ~4.1 GB
             promptType = PromptType.MISTRAL,
             description = "Pro Level. Flagship phones only.",
             ramRequiredGB = 6
+        ),
+
+        // ── Vision Models ──────────────────────────────────────────────────────
+        AiModel(
+            name = "SmolVLM 500M (Tiny Vision)",
+            filename = "SmolVLM-500M-Instruct-Q8_0.gguf",
+            url = "https://huggingface.co/ggml-org/SmolVLM-500M-Instruct-GGUF/resolve/main/SmolVLM-500M-Instruct-Q8_0.gguf",
+            expectedSize = 530000000L, // ~530 MB
+            promptType = PromptType.VISION,
+            description = "Smallest Vision Model (~530MB). Runs on any phone.",
+            ramRequiredGB = 2,
+            mmprojFilename = "mmproj-SmolVLM-500M-Instruct-f16.gguf",
+            mmprojUrl = "https://huggingface.co/ggml-org/SmolVLM-500M-Instruct-GGUF/resolve/main/mmproj-SmolVLM-500M-Instruct-f16.gguf",
+            mmprojExpectedSize = 380000000L // ~380 MB
+        ),
+        AiModel(
+            name = "Moondream2 1.8B (Fast Vision)",
+            filename = "moondream2-text-model-f16_ct-vicuna.gguf",
+            url = "https://huggingface.co/ggml-org/moondream2-20250414-GGUF/resolve/main/moondream2-text-model-f16_ct-vicuna.gguf",
+            expectedSize = 2870000000L, // ~2.84 GB
+            promptType = PromptType.VISION,
+            description = "Lightweight Vision Model. Very fast, perfect for mobile.",
+            ramRequiredGB = 4,
+            mmprojFilename = "moondream2-mmproj-f16-20250414.gguf",
+            mmprojUrl = "https://huggingface.co/ggml-org/moondream2-20250414-GGUF/resolve/main/moondream2-mmproj-f16-20250414.gguf",
+            mmprojExpectedSize = 910000000L // ~910 MB
+        ),
+        AiModel(
+            name = "MiniCPM-V 2.6 (Smart Vision)",
+            filename = "ggml-model-Q4_K_M.gguf",
+            url = "https://huggingface.co/openbmb/MiniCPM-V-2_6-gguf/resolve/main/ggml-model-Q4_K_M.gguf",
+            expectedSize = 5600000000L, // ~5.6 GB
+            promptType = PromptType.VISION,
+            description = "High quality Vision QA. Flagship devices recommended.",
+            ramRequiredGB = 8,
+            mmprojFilename = "mmproj-model-f16.gguf",
+            mmprojUrl = "https://huggingface.co/openbmb/MiniCPM-V-2_6-gguf/resolve/main/mmproj-model-f16.gguf",
+            mmprojExpectedSize = 1070000000L // ~1.07 GB
+        ),
+        AiModel(
+            name = "LLaVA 1.5 7B (Vision QA)",
+            filename = "ggml-model-q4_k.gguf",
+            url = "https://huggingface.co/mys/ggml_llava-v1.5-7b/resolve/main/ggml-model-q4_k.gguf",
+            expectedSize = 4080000000L, // ~4.08 GB
+            promptType = PromptType.VISION,
+            description = "Advanced Vision Model. Can see images and answer questions.",
+            ramRequiredGB = 7,
+            mmprojFilename = "mmproj-model-f16.gguf",
+            mmprojUrl = "https://huggingface.co/mys/ggml_llava-v1.5-7b/resolve/main/mmproj-model-f16.gguf",
+            mmprojExpectedSize = 624000000L // ~624 MB
         )
     )
     

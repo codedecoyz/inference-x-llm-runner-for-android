@@ -9,11 +9,13 @@ extern "C" {
 
 JNIEXPORT jlong JNICALL
 Java_com_mobilellama_native_LlamaEngine_nativeInit(
-    JNIEnv* env, jobject thiz, jstring modelPath, jint contextSize, jint numThreads);
+    JNIEnv* env, jobject thiz, jstring modelPath, jstring mmprojPath, jint contextSize, jint numThreads);
 
 JNIEXPORT jboolean JNICALL
 Java_com_mobilellama_native_LlamaEngine_nativeGenerate(
-    JNIEnv* env, jobject thiz, jlong handle, jstring prompt, jint maxTokens, jobject callback);
+    JNIEnv* env, jobject thiz, jlong handle, jstring prompt,
+    jbyteArray imagePixels, jint imageWidth, jint imageHeight,
+    jint maxTokens, jobject callback);
 
 JNIEXPORT void JNICALL
 Java_com_mobilellama_native_LlamaEngine_nativeStop(
